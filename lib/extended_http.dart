@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart';
@@ -22,7 +21,7 @@ class ExtendedHttp extends BaseClient {
     RetryClient(
       Client(),
       when: _shouldRetry,
-      whenError: (e, stack) => e is TimeoutException || e is SocketException,
+      whenError: (e, stack) => e is TimeoutException,
       onRetry: _beforeRetry,
     ),
   );
