@@ -14,7 +14,6 @@ class ExtendedHttp extends BaseClient {
   Duration _cacheAge = const Duration(seconds: 60);
   bool _disableCache = false;
   String _baseURL = '';
-  Future<void> Function()? onUnauthorized;
 
   Box<String>? _httpCacheBody;
   Box<String>? _httpCacheHeader;
@@ -31,7 +30,7 @@ class ExtendedHttp extends BaseClient {
   factory ExtendedHttp() {
     if (_instance._httpCacheBody == null ||
         _instance._httpCacheHeader == null) {
-      _instance.init();
+      _instance._init();
     }
     return _instance;
   }
@@ -58,21 +57,30 @@ class ExtendedHttp extends BaseClient {
     }
   }
 
-  Future<void> init() async {
+  /// Called when a request failed due to unauthorized (401)
+  ///
+  /// Here we can get token and update headers to authorize the request
+  ///
+  /// The request will automatically retry after this
+  Future<void> Function()? onUnauthorized;
+
+  Future<void> _init() async {
     await Hive.initFlutter();
     _httpCacheBody = await Hive.openBox<String>('httpCacheBody');
     _httpCacheHeader = await Hive.openBox<String>('httpCacheHeader');
   }
 
-  /// Override `ExtendedHttp` config
+  /// Override default config
   ///
-  /// `timeout` -- Request timeout, default `60 seconds`.
+  /// `baseURL` - API host path, such as `http://yourapi.com/v1`, default: ''
   ///
-  /// `networkFirst` -- If `true`, fetch data from network first,
-  /// then if failed, try get from cache. Versa if `false`.
-  /// Only work with `GET` requests, default `true`.
+  /// `timeout` - Request timeout, default `5 seconds`.
   ///
-  /// `headers` -- Custom request headers.
+  /// `disableCache` - default `false`.
+  ///
+  /// `cacheAge` - cache time to live, default `60 seconds`.
+  ///
+  /// `headers` - Custom request headers, default `{}`.
   void config({
     String? baseURL,
     Duration? timeout,
@@ -87,6 +95,9 @@ class ExtendedHttp extends BaseClient {
     _disableCache = disableCache ?? _disableCache;
   }
 
+  /// Create an URI with baseURL prefix
+  ///
+  /// The result with be `baseURL` + `path` + `params`
   Uri createURI(String path, {Map<String, String>? params}) {
     final u = Uri.parse(_baseURL + path);
     return Uri(
