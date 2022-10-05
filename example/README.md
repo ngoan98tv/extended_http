@@ -3,15 +3,25 @@
 All methods from `BaseClient` is inherited, including `get`, `post`, `put`, `patch` and more. See at [BaseClient APIs](https://pub.dev/documentation/http/latest/http/BaseClient-class.html)
 
 ```dart
+
 // Call config at the App init to apply for all following requests, skip to use default config.
+
 ExtendedHttp().config(
-    Duration timeout = const Duration(seconds: 60),
-    bool networkFirst = true,
-    Map<String, String>? headers,
-    String? baseURL,
+  String? baseURL,
+  Duration? timeout,
+  bool? disableCache,
+  Duration? cacheAge,
+  Map<String, String>? headers,
 );
 
-// Usage: Post APIs
+ExtendedHttp().onUnauthorized = () async {
+  // Fetch token
+  ExtendedHttp().config(
+    headers: // new headers,
+  );
+};
+
+// Usage: Example Post APIs
 class Post {
   static Future<List<Post>> getAll({
     int page = 1,

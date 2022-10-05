@@ -1,50 +1,27 @@
-# Easy API Integration with Providers
+# Easy API with authorization and caching
 
-![Test](https://github.com/ngoan98tv/remote_data_provider/workflows/Test/badge.svg)
-![DryRun](https://github.com/ngoan98tv/remote_data_provider/workflows/Pub%20Dry%20Run/badge.svg)
-![Publish](https://github.com/ngoan98tv/remote_data_provider/workflows/Publish/badge.svg)
-![PubVersion](https://img.shields.io/pub/v/remote_data_provider)
-![Issues](https://img.shields.io/github/issues/ngoan98tv/remote_data_provider)
+![Test](https://github.com/ngoan98tv/extended_http/workflows/Test/badge.svg)
+![DryRun](https://github.com/ngoan98tv/extended_http/workflows/Pub%20Dry%20Run/badge.svg)
+![Publish](https://github.com/ngoan98tv/extended_http/workflows/Publish/badge.svg)
+![PubVersion](https://img.shields.io/pub/v/extended_http)
+![Issues](https://img.shields.io/github/issues/ngoan98tv/extended_http)
 
-Help implementing providers easier with predefined abstract classes, special is for working with remote data like API.
+A Flutter HTTP package supports authorization and caching
 
 ## Features
 
-Work with any remote data provider such as REST API, GraphQL,...
-
-DataListProvider supports:
-
-- Fetch/refresh data with predefined `isLoading` state
-- Add data with predefined `isAdding` state
-- Update data with predefined `isUpdating` state
-- Delete data with predefined `isDeleting` state
-- Pagination with predefined `page`, `pageSize`, `lastPage` states
-- Sorting with predefined `sortOptions` state
-- Searching with predefined `search` state and integrated `debounce`
-
-BasicDataProvider supports:
-
-- Fetch/refresh data with predefined `isLoading` state
-- Update data with predefined `isUpdating` state
-- Delete data with predefined `isDeleting` state
-
-Extended HTTP supports:
-
-- Caching API response (for GET requests only)
-- Set request timeout
+- Handle unauthorized requests
+- Cache API response (for GET requests)
 - Set request headers (such as: authorization token,...)
 - Set request baseURL (Ex: `http://yourhost.com/api`)
+- Set request timeout
 
-See more in the example
+All methods from `BaseClient` is inherited, including `get`, `post`, `put`, `patch` and more. See at [BaseClient APIs](https://pub.dev/documentation/http/latest/http/BaseClient-class.html).
 
 ## Dependencies
 
 [http](https://pub.dev/packages/http)
 
-[flutter_cache_manager](https://pub.dev/packages/flutter_cache_manager)
+[hive](https://pub.dev/packages/hive)
 
-## References
-
-[provider](https://pub.dev/packages/provider)
-
-## Feel free to [leave an issue](https://github.com/ngoan98tv/remote_data_provider/issues) if you need help or see something wrong in this package.
+## Feel free to [leave an issue](https://github.com/ngoan98tv/extended_http/issues) if you need help or see something wrong in this package.
