@@ -1,3 +1,12 @@
+## [0.0.4] - Oct 21, 2022.
+
+Improve config headers to add new values instead of replace all.
+
+From now, when calling `config(headers: {new-headers})`
+
+- matched headers will be overwritten
+- while others headers will be kept
+
 ## [0.0.3] - Oct 5, 2022.
 
 Remove import dart:io

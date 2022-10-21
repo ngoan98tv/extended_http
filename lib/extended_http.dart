@@ -88,10 +88,10 @@ class ExtendedHttp extends BaseClient {
     Map<String, String>? headers,
   }) {
     _timeout = timeout ?? _timeout;
-    _headers = headers ?? _headers;
     _baseURL = baseURL ?? _baseURL;
     _cacheAge = cacheAge ?? _cacheAge;
     _disableCache = disableCache ?? _disableCache;
+    _headers.addAll(headers ?? {});
   }
 
   /// Create an URI with baseURL prefix
