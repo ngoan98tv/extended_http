@@ -1,3 +1,7 @@
+## [0.1.4] - Oct 21, 2022.
+
+Expose `shouldRetry` method so you can define your own logic there
+
 ## [0.0.4] - Oct 21, 2022.
 
 Improve config headers to add new values instead of replace all.

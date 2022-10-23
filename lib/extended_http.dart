@@ -37,8 +37,11 @@ class ExtendedHttp extends BaseClient {
   ExtendedHttp._internal(this._client);
 
   static bool _shouldRetry(BaseResponse res) {
-    if ([401, 503].contains(res.statusCode)) {
+    if (res.statusCode == 503) {
       return true;
+    }
+    if (_instance.shouldRetry != null) {
+      return _instance.shouldRetry!(res);
     }
     return false;
   }
@@ -56,12 +59,19 @@ class ExtendedHttp extends BaseClient {
     }
   }
 
-  /// Called when a request failed due to unauthorized (401)
+  /// YOU MUST DEFINE `shouldRetry` FUNCTION TO MAKE THIS WORK
+  ///
+  /// Add `return response.statusCode == 401` into `shouldRetry` to trigger this
   ///
   /// Here we can get token and update headers to authorize the request
   ///
   /// The request will automatically retry after this
   Future<void> Function()? onUnauthorized;
+
+  /// Called when a request failed to check if it should be retried or not
+  ///
+  /// Default only 503 requests are retried
+  bool Function(BaseResponse response)? shouldRetry;
 
   Future<void> _init() async {
     await Hive.initFlutter();

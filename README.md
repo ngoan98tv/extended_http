@@ -10,7 +10,8 @@ A Flutter HTTP package supports authorization and caching
 
 ## Features
 
-- Handle unauthorized requests
+- Handle unauthorized requests by define `onUnauthorized` method
+- Specify when to retry the requests via `shouldRetry` method
 - Cache API response (for GET requests)
 - Set request headers (such as: authorization token,...)
 - Set request baseURL (Ex: `http://yourhost.com/api`)
