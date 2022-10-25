@@ -21,7 +21,7 @@ class ExtendedHttp extends BaseClient {
     RetryClient(
       Client(),
       when: _shouldRetry,
-      whenError: (e, stack) => e is TimeoutException,
+      whenError: _shouldRetryError,
       onRetry: _beforeRetry,
     ),
   );
@@ -35,6 +35,16 @@ class ExtendedHttp extends BaseClient {
   }
 
   ExtendedHttp._internal(this._client);
+
+  static bool _shouldRetryError(Object error, StackTrace stack) {
+    if (error is TimeoutException) {
+      return true;
+    }
+    if (_instance.onError != null) {
+      return _instance.onError!(error, stack);
+    }
+    return false;
+  }
 
   static bool _shouldRetry(BaseResponse res) {
     if (res.statusCode == 503) {
@@ -72,6 +82,11 @@ class ExtendedHttp extends BaseClient {
   ///
   /// Default only 503 requests are retried
   bool Function(BaseResponse response)? shouldRetry;
+
+  /// Called when an error occurred to check if it should be retried or not
+  ///
+  /// Default only TimeoutException requests are retried
+  bool Function(Object error, StackTrace stack)? onError;
 
   Future<void> _init() async {
     await Hive.initFlutter();

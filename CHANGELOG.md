@@ -1,3 +1,7 @@
+## [0.2.4] - Oct 25, 2022.
+
+Expose `onError` method so you can define your own logic there
+
 ## [0.1.4] - Oct 21, 2022.
 
 Expose `shouldRetry` method so you can define your own logic there
