@@ -1,3 +1,12 @@
+## [0.3.4] - Oct 25, 2022.
+
+Improve logging with color and added new log options
+
+- logURL
+- logRequestHeaders
+- logRespondHeaders
+- logRespondBody
+
 ## [0.2.4] - Oct 25, 2022.
 
 Expose `onError` method so you can define your own logic there

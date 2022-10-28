@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:extended_http/logger.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
@@ -8,11 +8,17 @@ import 'package:http/retry.dart';
 /// Extend from `BaseClient`, adding caching and timeout features.
 class ExtendedHttp extends BaseClient {
   final Client _client;
+  final _logger = Logger("ExtendedHttp");
   Map<String, String> _headers = {};
   Duration _timeout = const Duration(seconds: 5);
   Duration _cacheAge = const Duration(seconds: 60);
-  bool _disableCache = false;
   String _baseURL = '';
+
+  bool _disableCache = false;
+  bool _logURL = true;
+  bool _logRequestHeaders = false;
+  bool _logRespondHeaders = false;
+  bool _logRespondBody = false;
 
   Box<String>? _httpCacheBody;
   Box<String>? _httpCacheHeader;
@@ -111,12 +117,20 @@ class ExtendedHttp extends BaseClient {
     bool? disableCache,
     Duration? cacheAge,
     Map<String, String>? headers,
+    bool? logURL,
+    bool? logRequestHeaders,
+    bool? logRespondHeaders,
+    bool? logRespondBody,
   }) {
     _timeout = timeout ?? _timeout;
     _baseURL = baseURL ?? _baseURL;
     _cacheAge = cacheAge ?? _cacheAge;
     _disableCache = disableCache ?? _disableCache;
     _headers.addAll(headers ?? {});
+    _logURL = logURL ?? _logURL;
+    _logRequestHeaders = logRequestHeaders ?? _logRequestHeaders;
+    _logRespondHeaders = logRespondHeaders ?? _logRespondHeaders;
+    _logRespondBody = logRespondBody ?? _logRespondBody;
   }
 
   /// Create an URI with baseURL prefix
@@ -137,34 +151,44 @@ class ExtendedHttp extends BaseClient {
   Future<StreamedResponse> send(BaseRequest request) async {
     request.headers.addAll(_headers);
 
-    _log("${request.method} ${request.url}");
-
-    if (_disableCache || request.method != "GET") {
-      return _client.send(request).timeout(_timeout);
+    if (_logURL) {
+      _log("${request.method} ${request.url}");
+    }
+    if (_logRequestHeaders) {
+      _log("Request headers", json: request.headers);
     }
 
-    _log("Read from cache");
-    final cachedResponse = _responseFromCache(request.url);
-    if (cachedResponse != null) {
-      return cachedResponse;
+    if (!_disableCache && request.method == 'GET') {
+      _log("Read from cache");
+      final cachedResponse = _responseFromCache(request.url);
+      if (cachedResponse != null) {
+        _log("Return cached response");
+        return cachedResponse;
+      }
+      _log("Cache empty. Send request.");
     }
-
-    _log("Cache empty");
-    _log("Send request");
 
     final response = await _client.send(request).timeout(_timeout);
+    final bodyString = await response.stream.bytesToString();
 
-    if (response.statusCode != 200) {
-      return response;
+    if (_logRespondHeaders) {
+      _log("Response (${response.statusCode}) headers", json: response.headers);
+    }
+    if (_logRespondBody) {
+      _log(
+        "${request.method} (${response.statusCode}) ${request.url}",
+        json: bodyString,
+      );
     }
 
-    _log("Write to cache");
-    final bodyString = await response.stream.bytesToString();
-    await _cacheResponse(request.url, bodyString, response.headers);
+    if (!_disableCache && response.statusCode == 200) {
+      _log("Write to cache");
+      await _cacheResponse(request.url, bodyString, response.headers);
+    }
 
     return StreamedResponse(
       Stream.value(utf8.encode(bodyString)),
-      200,
+      response.statusCode,
       headers: response.headers,
       reasonPhrase: response.reasonPhrase,
       contentLength: response.contentLength,
@@ -222,6 +246,13 @@ class ExtendedHttp extends BaseClient {
       }
     }
 
+    if (_logRespondHeaders) {
+      _log("Cached (203) $cacheKey headers", json: headers);
+    }
+    if (_logRespondBody) {
+      _log("Cached (203) $cacheKey body", json: bodyString);
+    }
+
     return StreamedResponse(
       Stream.value(utf8.encode(bodyString)),
       203,
@@ -230,7 +261,11 @@ class ExtendedHttp extends BaseClient {
     );
   }
 
-  void _log(String message) {
-    debugPrint("ExtendedHttp: $message");
+  void _log(String message, {dynamic json}) {
+    if (json != null) {
+      _logger.logWithJson(message, json: json);
+    } else {
+      _logger.log(message);
+    }
   }
 }
