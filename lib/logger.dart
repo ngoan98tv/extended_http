@@ -22,11 +22,13 @@ class Logger {
 
   void logWithJson(String message, {dynamic json}) {
     debugPrint("\x1B[33m$namespace: $message");
-    final str = jsonString(json).splitMapJoin(
-      '\n',
-      onMatch: (m) => "${m[0]}\x1B[33m    ",
-      onNonMatch: (s) => s,
-    );
-    debugPrint("\x1B[33m    $str");
+    if (json != null) {
+      final str = jsonString(json).splitMapJoin(
+        '\n',
+        onMatch: (m) => "${m[0]}\x1B[33m    ",
+        onNonMatch: (s) => s,
+      );
+      debugPrint("\x1B[33m    $str");
+    }
   }
 }
