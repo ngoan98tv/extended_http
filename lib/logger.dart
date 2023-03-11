@@ -17,18 +17,18 @@ class Logger {
   }
 
   void log(String message, {String? debugId}) {
-    debugPrint("\x1B[33m$namespace[$debugId] $message\x1B[0m");
+    debugPrint("\x1B[33m$namespace[${debugId ?? 'ID'}] $message\x1B[0m");
   }
 
   void logWithJson(String message, {dynamic json, String? debugId}) {
-    debugPrint("\x1B[33m$namespace[$debugId] $message");
+    debugPrint("\x1B[33m$namespace[${debugId ?? 'ID'}] $message");
     if (json != null) {
       final str = jsonString(json).splitMapJoin(
         '\n',
-        onMatch: (m) => "${m[0]}\x1B[33m$namespace[$debugId]    ",
+        onMatch: (m) => "${m[0]}\x1B[33m$namespace[${debugId ?? 'ID'}]    ",
         onNonMatch: (s) => s,
       );
-      debugPrint("\x1B[33m$namespace[$debugId]    $str");
+      debugPrint("\x1B[33m$namespace[${debugId ?? 'ID'}]    $str");
     }
   }
 }

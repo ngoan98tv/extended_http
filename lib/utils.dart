@@ -32,5 +32,7 @@ class HttpConfig {
     this.logRequestHeader = false,
     this.logRespondHeader = false,
     this.logRespondBody = false,
-  });
+  }) {
+    headers = {};
+  }
 }
