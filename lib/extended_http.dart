@@ -2,71 +2,80 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:extended_http/logger.dart';
 import 'package:extended_http/store.dart';
+import 'package:extended_http/utils.dart';
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
 
 /// Extend from `BaseClient`, adding caching and timeout features.
 class ExtendedHttp extends BaseClient {
+  late Store _store;
+  final String _domain;
   final Client _client;
   final Logger _logger = Logger("ExtendedHttp");
-  final Store _store = Store();
+  final HttpConfig _config = HttpConfig();
 
-  Map<String, String> _headers = {};
-  Duration _timeout = const Duration(seconds: 5);
-  Duration _cacheAge = const Duration(seconds: 60);
-  String _baseURL = '';
+  bool get _disableCache => _config.cachePolicy == CachePolicy.NoCache;
+  bool get _cacheFirst => _config.cachePolicy == CachePolicy.CacheFirst;
+  bool get _networkFirst => _config.cachePolicy == CachePolicy.NetworkFirst;
 
-  bool _disableCache = false;
-  bool _logURL = true;
-  bool _logRequestHeaders = false;
-  bool _logRespondHeaders = false;
-  bool _logRespondBody = false;
+  static final Map<String, ExtendedHttp> _instanceMap = {};
 
-  static final _instance = ExtendedHttp._internal(
-    RetryClient(
-      Client(),
-      when: _shouldRetry,
-      whenError: _shouldRetryError,
-      onRetry: _beforeRetry,
-    ),
-  );
-
-  factory ExtendedHttp() {
-    return _instance;
+  factory ExtendedHttp([String domain = 'default']) {
+    if (!_instanceMap.containsKey(domain)) {
+      _instanceMap[domain] = ExtendedHttp._internal(
+        domain,
+        RetryClient(
+          Client(),
+          when: (BaseResponse res) => _shouldRetry(domain, res),
+          whenError: (Object error, StackTrace stack) =>
+              _shouldRetryError(domain, error, stack),
+          onRetry: (BaseRequest req, BaseResponse? res, int retryCount) =>
+              _beforeRetry(domain, req, res, retryCount),
+        ),
+      );
+      _instanceMap[domain]!.init();
+    }
+    return _instanceMap[domain]!;
   }
 
-  ExtendedHttp._internal(this._client);
+  ExtendedHttp._internal(this._domain, this._client);
 
-  static bool _shouldRetryError(Object error, StackTrace stack) {
+  void init() {
+    _store = Store(_domain);
+  }
+
+  static bool _shouldRetryError(String domain, Object error, StackTrace stack) {
     if (error is TimeoutException) {
       return true;
     }
-    if (_instance.onError != null) {
-      return _instance.onError!(error, stack);
+    if (_instanceMap[domain]!.onError != null) {
+      return _instanceMap[domain]!.onError!(error, stack);
     }
     return false;
   }
 
-  static bool _shouldRetry(BaseResponse res) {
+  static bool _shouldRetry(String domain, BaseResponse res) {
     if (res.statusCode == 503) {
       return true;
     }
-    if (_instance.shouldRetry != null) {
-      return _instance.shouldRetry!(res);
+    if (_instanceMap[domain]!.shouldRetry != null) {
+      return _instanceMap[domain]!.shouldRetry!(res);
     }
     return false;
   }
 
   static Future<void> _beforeRetry(
+    String domain,
     BaseRequest req,
     BaseResponse? res,
     int retryCount,
   ) async {
-    _instance._log("Retry ($retryCount) ${req.method} ${req.url}");
-    _instance._log("Headers ${req.headers}");
-    if (res?.statusCode == 401 && _instance.onUnauthorized != null) {
-      await _instance.onUnauthorized!();
-      req.headers.addAll(_instance._headers);
+    _instanceMap[domain]!._log("Retry ($retryCount) ${req.method} ${req.url}");
+    _instanceMap[domain]!._log("Headers ${req.headers}");
+    if (res?.statusCode == 401 &&
+        _instanceMap[domain]!.onUnauthorized != null) {
+      await _instanceMap[domain]!.onUnauthorized!();
+      req.headers.addAll(_instanceMap[domain]!._config.headers);
     }
   }
 
@@ -103,30 +112,28 @@ class ExtendedHttp extends BaseClient {
   void config({
     String? baseURL,
     Duration? timeout,
-    bool? disableCache,
-    Duration? cacheAge,
+    CachePolicy? cachePolicy,
     Map<String, String>? headers,
     bool? logURL,
     bool? logRequestHeaders,
     bool? logRespondHeaders,
     bool? logRespondBody,
   }) {
-    _timeout = timeout ?? _timeout;
-    _baseURL = baseURL ?? _baseURL;
-    _cacheAge = cacheAge ?? _cacheAge;
-    _disableCache = disableCache ?? _disableCache;
-    _headers.addAll(headers ?? {});
-    _logURL = logURL ?? _logURL;
-    _logRequestHeaders = logRequestHeaders ?? _logRequestHeaders;
-    _logRespondHeaders = logRespondHeaders ?? _logRespondHeaders;
-    _logRespondBody = logRespondBody ?? _logRespondBody;
+    _config.timeout = timeout ?? _config.timeout;
+    _config.baseURL = baseURL ?? _config.baseURL;
+    _config.cachePolicy = cachePolicy ?? _config.cachePolicy;
+    _config.headers.addAll(headers ?? {});
+    _config.logURL = logURL ?? _config.logURL;
+    _config.logRequestHeader = logRequestHeaders ?? _config.logRequestHeader;
+    _config.logRespondHeader = logRespondHeaders ?? _config.logRespondHeader;
+    _config.logRespondBody = logRespondBody ?? _config.logRespondBody;
   }
 
   /// Create an URI with baseURL prefix
   ///
   /// The result with be `baseURL` + `path` + `params`
   Uri createURI(String path, {Map<String, String>? params}) {
-    final u = Uri.parse(_baseURL + path);
+    final u = Uri.parse(_config.baseURL + path);
     return Uri(
       scheme: u.scheme,
       host: u.host,
@@ -138,16 +145,16 @@ class ExtendedHttp extends BaseClient {
 
   @override
   Future<StreamedResponse> send(BaseRequest request) async {
-    request.headers.addAll(_headers);
+    request.headers.addAll(_config.headers);
 
-    if (_logURL) {
+    if (_config.logURL) {
       _log("${request.method} ${request.url}");
     }
-    if (_logRequestHeaders) {
+    if (_config.logRequestHeader) {
       _log("Request headers", json: request.headers);
     }
 
-    if (!_disableCache && request.method == 'GET') {
+    if (request.method == 'GET' && _cacheFirst) {
       _log("Read from cache");
       final cachedResponse = _responseFromCache(request.url);
       if (cachedResponse != null) {
@@ -157,22 +164,33 @@ class ExtendedHttp extends BaseClient {
       _log("Cache empty. Send request.");
     }
 
-    final response = await _client.send(request).timeout(_timeout);
+    final response = await _client.send(request).timeout(_config.timeout);
     final bodyString = await response.stream.bytesToString();
 
-    if (_logRespondHeaders) {
+    if (_config.logRespondHeader) {
       _log("Response (${response.statusCode}) headers", json: response.headers);
     }
-    if (_logRespondBody) {
+
+    if (_config.logRespondBody) {
       _log(
         "${request.method} (${response.statusCode}) ${request.url}",
         json: bodyString,
       );
     }
 
-    if (!_disableCache && response.statusCode == 200) {
-      _log("Write to cache");
-      await _cacheResponse(request.url, bodyString, response.headers);
+    if (request.method == 'GET' && !_disableCache) {
+      if (response.statusCode == 200) {
+        _log("Write to cache");
+        await _cacheResponse(request.url, bodyString, response.headers);
+      } else {
+        if (_networkFirst) {
+          final cachedResponse = _responseFromCache(request.url);
+          if (cachedResponse != null) {
+            _log("Return cached response");
+            return cachedResponse;
+          }
+        }
+      }
     }
 
     return StreamedResponse(
@@ -191,16 +209,12 @@ class ExtendedHttp extends BaseClient {
     Map<String, String> headers,
   ) async {
     final cacheKey = uri.toString();
+    final headerString = jsonEncode(headers);
 
     _store.putBody(
       cacheKey,
       bodyString,
     );
-
-    final validTo = DateTime.now().add(_cacheAge).toIso8601String();
-    headers['cache-valid-to'] = validTo;
-
-    final headerString = jsonEncode(headers);
 
     _store.putHeader(
       cacheKey,
@@ -208,10 +222,7 @@ class ExtendedHttp extends BaseClient {
     );
   }
 
-  StreamedResponse? _responseFromCache(
-    Uri uri, {
-    bool ignoreValidDate = false,
-  }) {
+  StreamedResponse? _responseFromCache(Uri uri) {
     final cacheKey = uri.toString();
     final bodyString = _store.getBody(cacheKey);
     final headerString = _store.getHeader(cacheKey);
@@ -223,28 +234,17 @@ class ExtendedHttp extends BaseClient {
     final headerMap = jsonDecode(headerString ?? "{}") as Map<String, dynamic>;
     final headers = headerMap.map((key, value) => MapEntry(key, "$value"));
 
-    if (!ignoreValidDate) {
-      if (headers['cache-valid-to'] == null) {
-        return null;
-      }
-
-      final validDate = DateTime.parse(headers['cache-valid-to']!);
-
-      if (validDate.isBefore(DateTime.now())) {
-        return null;
-      }
+    if (_config.logRespondHeader) {
+      _log("Cached (200) $cacheKey headers", json: headers);
     }
 
-    if (_logRespondHeaders) {
-      _log("Cached (203) $cacheKey headers", json: headers);
-    }
-    if (_logRespondBody) {
-      _log("Cached (203) $cacheKey body", json: bodyString);
+    if (_config.logRespondBody) {
+      _log("Cached (200) $cacheKey body", json: bodyString);
     }
 
     return StreamedResponse(
       Stream.value(utf8.encode(bodyString)),
-      203,
+      200,
       headers: headers,
       reasonPhrase: "Cached Response",
     );
