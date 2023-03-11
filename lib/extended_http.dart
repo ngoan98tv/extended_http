@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:extended_http/logger.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:extended_http/store.dart';
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
 
 /// Extend from `BaseClient`, adding caching and timeout features.
 class ExtendedHttp extends BaseClient {
   final Client _client;
-  final _logger = Logger("ExtendedHttp");
+  final Logger _logger = Logger("ExtendedHttp");
+  final Store _store = Store();
+
   Map<String, String> _headers = {};
   Duration _timeout = const Duration(seconds: 5);
   Duration _cacheAge = const Duration(seconds: 60);
@@ -20,9 +22,6 @@ class ExtendedHttp extends BaseClient {
   bool _logRespondHeaders = false;
   bool _logRespondBody = false;
 
-  Box<String>? _httpCacheBody;
-  Box<String>? _httpCacheHeader;
-
   static final _instance = ExtendedHttp._internal(
     RetryClient(
       Client(),
@@ -33,10 +32,6 @@ class ExtendedHttp extends BaseClient {
   );
 
   factory ExtendedHttp() {
-    if (_instance._httpCacheBody == null ||
-        _instance._httpCacheHeader == null) {
-      _instance._init();
-    }
     return _instance;
   }
 
@@ -93,12 +88,6 @@ class ExtendedHttp extends BaseClient {
   ///
   /// Default only TimeoutException requests are retried
   bool Function(Object error, StackTrace stack)? onError;
-
-  Future<void> _init() async {
-    await Hive.initFlutter();
-    _httpCacheBody = await Hive.openBox<String>('httpCacheBody');
-    _httpCacheHeader = await Hive.openBox<String>('httpCacheHeader');
-  }
 
   /// Override default config
   ///
@@ -203,7 +192,7 @@ class ExtendedHttp extends BaseClient {
   ) async {
     final cacheKey = uri.toString();
 
-    await _httpCacheBody?.put(
+    _store.putBody(
       cacheKey,
       bodyString,
     );
@@ -213,7 +202,7 @@ class ExtendedHttp extends BaseClient {
 
     final headerString = jsonEncode(headers);
 
-    await _httpCacheHeader?.put(
+    _store.putHeader(
       cacheKey,
       headerString,
     );
@@ -224,8 +213,8 @@ class ExtendedHttp extends BaseClient {
     bool ignoreValidDate = false,
   }) {
     final cacheKey = uri.toString();
-    final bodyString = _httpCacheBody?.get(cacheKey);
-    final headerString = _httpCacheHeader?.get(cacheKey);
+    final bodyString = _store.getBody(cacheKey);
+    final headerString = _store.getHeader(cacheKey);
 
     if (bodyString == null || bodyString.isEmpty) {
       return null;
