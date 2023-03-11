@@ -132,61 +132,79 @@ class ExtendedHttp extends BaseClient {
   /// Create an URI with baseURL prefix
   ///
   /// The result with be `baseURL` + `path` + `params`
-  Uri createURI(String path, {Map<String, String>? params}) {
+  Uri createURI(
+    String path, {
+    String? debugId,
+    Map<String, String>? params,
+  }) {
     final u = Uri.parse(_config.baseURL + path);
+    Map<String, String> queryParameters = {};
+    if (debugId != null) {
+      queryParameters.addAll({debugId: debugId});
+    }
+    if (params != null) {
+      queryParameters.addAll(params);
+    }
     return Uri(
       scheme: u.scheme,
       host: u.host,
       port: u.port,
       path: u.path,
-      queryParameters: params,
+      queryParameters: queryParameters,
     );
   }
 
   @override
   Future<StreamedResponse> send(BaseRequest request) async {
+    final debugId = request.url.queryParameters['debugId'];
+
     request.headers.addAll(_config.headers);
 
     if (_config.logURL) {
-      _log("${request.method} ${request.url}");
+      _log("${request.method} ${request.url}", debugId: debugId);
     }
     if (_config.logRequestHeader) {
-      _log("Request headers", json: request.headers);
+      _log("Request headers", json: request.headers, debugId: debugId);
     }
 
     if (request.method == 'GET' && _cacheFirst) {
-      _log("Read from cache");
+      _log("Read from cache", debugId: debugId);
       final cachedResponse = _responseFromCache(request.url);
       if (cachedResponse != null) {
-        _log("Return cached response");
+        _log("Return cached response", debugId: debugId);
         return cachedResponse;
       }
-      _log("Cache empty. Send request.");
+      _log("Cache empty. Send request.", debugId: debugId);
     }
 
     final response = await _client.send(request).timeout(_config.timeout);
     final bodyString = await response.stream.bytesToString();
 
     if (_config.logRespondHeader) {
-      _log("Response (${response.statusCode}) headers", json: response.headers);
+      _log(
+        "Response (${response.statusCode}) headers",
+        json: response.headers,
+        debugId: debugId,
+      );
     }
 
     if (_config.logRespondBody) {
       _log(
         "${request.method} (${response.statusCode}) ${request.url}",
         json: bodyString,
+        debugId: debugId,
       );
     }
 
     if (request.method == 'GET' && !_disableCache) {
       if (response.statusCode == 200) {
-        _log("Write to cache");
+        _log("Write to cache", debugId: debugId);
         await _cacheResponse(request.url, bodyString, response.headers);
       } else {
         if (_networkFirst) {
           final cachedResponse = _responseFromCache(request.url);
           if (cachedResponse != null) {
-            _log("Return cached response");
+            _log("Return cached response", debugId: debugId);
             return cachedResponse;
           }
         }
@@ -250,11 +268,11 @@ class ExtendedHttp extends BaseClient {
     );
   }
 
-  void _log(String message, {dynamic json}) {
+  void _log(String message, {dynamic json, String? debugId}) {
     if (json != null) {
-      _logger.logWithJson(message, json: json);
+      _logger.logWithJson(message, json: json, debugId: debugId);
     } else {
-      _logger.log(message);
+      _logger.log(message, debugId: debugId);
     }
   }
 }

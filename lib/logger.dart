@@ -16,19 +16,19 @@ class Logger {
     return _encoder.convert(value);
   }
 
-  void log(String message) {
-    debugPrint("\x1B[33m$namespace: $message\x1B[0m");
+  void log(String message, {String? debugId}) {
+    debugPrint("\x1B[33m$namespace[$debugId] $message\x1B[0m");
   }
 
-  void logWithJson(String message, {dynamic json}) {
-    debugPrint("\x1B[33m$namespace: $message");
+  void logWithJson(String message, {dynamic json, String? debugId}) {
+    debugPrint("\x1B[33m$namespace[$debugId] $message");
     if (json != null) {
       final str = jsonString(json).splitMapJoin(
         '\n',
-        onMatch: (m) => "${m[0]}\x1B[33m    ",
+        onMatch: (m) => "${m[0]}\x1B[33m$namespace[$debugId]    ",
         onNonMatch: (s) => s,
       );
-      debugPrint("\x1B[33m    $str");
+      debugPrint("\x1B[33m$namespace[$debugId]    $str");
     }
   }
 }
