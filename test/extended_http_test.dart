@@ -1,7 +1,13 @@
 import 'package:extended_http/extended_http.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'fake_path_provider.dart';
 
 void main() {
+  setUpAll(() {
+    PathProviderPlatform.instance = FakePathProviderPlatform();
+  });
+
   test('create uri without parameters', () async {
     ExtendedHttp().config(
       baseURL: 'http://pub.dev',
