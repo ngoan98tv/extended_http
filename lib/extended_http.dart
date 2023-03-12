@@ -140,7 +140,7 @@ class ExtendedHttp extends BaseClient {
     final u = Uri.parse(_config.baseURL + path);
     Map<String, String> queryParameters = {};
     if (debugId != null) {
-      queryParameters.addAll({debugId: debugId});
+      queryParameters.addAll({"debugId": debugId});
     }
     if (params != null) {
       queryParameters.addAll(params);
@@ -150,7 +150,7 @@ class ExtendedHttp extends BaseClient {
       host: u.host,
       port: u.port,
       path: u.path,
-      queryParameters: queryParameters,
+      queryParameters: queryParameters.isEmpty ? null : queryParameters,
     );
   }
 
