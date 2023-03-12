@@ -8,6 +8,10 @@ import 'package:http/retry.dart';
 
 /// Extend from `BaseClient`, adding caching and timeout features.
 class ExtendedHttp extends BaseClient {
+  /// YOU MUST DEFINE `shouldRetry` FUNCTION TO MAKE THIS WORK
+  ///
+  /// Add `return response.statusCode == 401` into `shouldRetry` to trigger this
+  ///
   /// Here we can get token and update headers to authorize the request
   ///
   /// The request will automatically retry after this
@@ -124,9 +128,6 @@ class ExtendedHttp extends BaseClient {
 
   static bool _shouldRetry(String domain, BaseResponse res) {
     if (res.statusCode == 503) {
-      return true;
-    }
-    if (res.statusCode == 401 && _instanceMap[domain]!.onUnauthorized != null) {
       return true;
     }
     return _instanceMap[domain]!.shouldRetry?.call(res) ?? false;
