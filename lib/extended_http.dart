@@ -95,11 +95,9 @@ class ExtendedHttp extends BaseClient {
   ///
   /// `baseURL` - API host path, such as `http://yourapi.com/v1`, default: ''
   ///
-  /// `timeout` - Request timeout, default `5 seconds`.
+  /// `timeout` - Request timeout, default `10 seconds`.
   ///
-  /// `disableCache` - default `false`.
-  ///
-  /// `cacheAge` - cache time to live, default `60 seconds`.
+  /// `cachePolicy` - Specify how cache should be processed, see more on `CachePolicy`, default `NetworkFirst`
   ///
   /// `headers` - Custom request headers, default `{}`.
   void config({
@@ -125,6 +123,8 @@ class ExtendedHttp extends BaseClient {
   /// Create an URI with baseURL prefix
   ///
   /// The result with be `baseURL` + `path` + `params`
+  ///
+  /// A `debugId` can be added to easy filter out relevant logs
   Uri createURI(
     String path, {
     String? debugId,
