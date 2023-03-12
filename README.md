@@ -24,6 +24,7 @@ All methods from `BaseClient` is inherited, including `get`, `post`, `put`, `pat
 - Support multiple API domains, alternative domains.
 - Support auto authentication with access and refresh token.
 - Support different caching options to specific paths.
+- Support fake responses for testing
 
 ## Dependencies
 
