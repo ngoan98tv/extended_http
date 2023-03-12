@@ -12,6 +12,11 @@ enum CachePolicy {
   ControlHeader
 }
 
+enum AuthStrategy {
+  /// Enable authorization using Access Tokens and Refresh Tokens pair.
+  OAuth2,
+}
+
 class HttpConfig {
   String baseURL;
   Duration timeout;

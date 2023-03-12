@@ -8,74 +8,6 @@ import 'package:http/retry.dart';
 
 /// Extend from `BaseClient`, adding caching and timeout features.
 class ExtendedHttp extends BaseClient {
-  late Store _store;
-  final String _domain;
-  final Client _client;
-  final Logger _logger = Logger("ExtendedHttp");
-  final HttpConfig _config = HttpConfig();
-
-  bool get _disableCache => _config.cachePolicy == CachePolicy.NoCache;
-  bool get _cacheFirst => _config.cachePolicy == CachePolicy.CacheFirst;
-  bool get _networkFirst => _config.cachePolicy == CachePolicy.NetworkFirst;
-
-  static final Map<String, ExtendedHttp> _instanceMap = {};
-
-  factory ExtendedHttp([String domain = 'default']) {
-    if (!_instanceMap.containsKey(domain)) {
-      _instanceMap[domain] = ExtendedHttp._internal(
-        domain,
-        RetryClient(
-          Client(),
-          when: (BaseResponse res) => _shouldRetry(domain, res),
-          whenError: (Object error, StackTrace stack) =>
-              _shouldRetryError(domain, error, stack),
-          onRetry: (BaseRequest req, BaseResponse? res, int retryCount) =>
-              _beforeRetry(domain, req, res, retryCount),
-        ),
-      );
-      _instanceMap[domain]!.init();
-    }
-    return _instanceMap[domain]!;
-  }
-
-  ExtendedHttp._internal(this._domain, this._client);
-
-  void init() {
-    _store = Store(_domain);
-  }
-
-  static bool _shouldRetryError(String domain, Object error, StackTrace stack) {
-    if (error is TimeoutException) {
-      return true;
-    }
-    return _instanceMap[domain]!.onError?.call(error, stack) ?? false;
-  }
-
-  static bool _shouldRetry(String domain, BaseResponse res) {
-    if (res.statusCode == 503) {
-      return true;
-    }
-    if (res.statusCode == 401 && _instanceMap[domain]!.onUnauthorized != null) {
-      return true;
-    }
-    return _instanceMap[domain]!.shouldRetry?.call(res) ?? false;
-  }
-
-  static Future<void> _beforeRetry(
-    String domain,
-    BaseRequest req,
-    BaseResponse? res,
-    int retryCount,
-  ) async {
-    _instanceMap[domain]!._log("Retry ($retryCount) ${req.method} ${req.url}");
-    _instanceMap[domain]!._log("Headers ${req.headers}");
-    if (res?.statusCode == 401 &&
-        _instanceMap[domain]!.onUnauthorized != null) {
-      await _instanceMap[domain]!.onUnauthorized!();
-      req.headers.addAll(_instanceMap[domain]!._config.headers);
-    }
-  }
-
   /// Here we can get token and update headers to authorize the request
   ///
   /// The request will automatically retry after this
@@ -145,6 +77,74 @@ class ExtendedHttp extends BaseClient {
       path: u.path,
       queryParameters: queryParameters.isEmpty ? null : queryParameters,
     );
+  }
+
+  late Store _store;
+  final String _domain;
+  final Client _client;
+  final Logger _logger = Logger("ExtendedHttp");
+  final HttpConfig _config = HttpConfig();
+
+  bool get _disableCache => _config.cachePolicy == CachePolicy.NoCache;
+  bool get _cacheFirst => _config.cachePolicy == CachePolicy.CacheFirst;
+  bool get _networkFirst => _config.cachePolicy == CachePolicy.NetworkFirst;
+
+  static final Map<String, ExtendedHttp> _instanceMap = {};
+
+  factory ExtendedHttp([String domain = 'default']) {
+    if (!_instanceMap.containsKey(domain)) {
+      _instanceMap[domain] = ExtendedHttp._internal(
+        domain,
+        RetryClient(
+          Client(),
+          when: (BaseResponse res) => _shouldRetry(domain, res),
+          whenError: (Object error, StackTrace stack) =>
+              _shouldRetryError(domain, error, stack),
+          onRetry: (BaseRequest req, BaseResponse? res, int retryCount) =>
+              _beforeRetry(domain, req, res, retryCount),
+        ),
+      );
+      _instanceMap[domain]!.init();
+    }
+    return _instanceMap[domain]!;
+  }
+
+  ExtendedHttp._internal(this._domain, this._client);
+
+  void init() {
+    _store = Store(_domain);
+  }
+
+  static bool _shouldRetryError(String domain, Object error, StackTrace stack) {
+    if (error is TimeoutException) {
+      return true;
+    }
+    return _instanceMap[domain]!.onError?.call(error, stack) ?? false;
+  }
+
+  static bool _shouldRetry(String domain, BaseResponse res) {
+    if (res.statusCode == 503) {
+      return true;
+    }
+    if (res.statusCode == 401 && _instanceMap[domain]!.onUnauthorized != null) {
+      return true;
+    }
+    return _instanceMap[domain]!.shouldRetry?.call(res) ?? false;
+  }
+
+  static Future<void> _beforeRetry(
+    String domain,
+    BaseRequest req,
+    BaseResponse? res,
+    int retryCount,
+  ) async {
+    _instanceMap[domain]!._log("Retry ($retryCount) ${req.method} ${req.url}");
+    _instanceMap[domain]!._log("Headers ${req.headers}");
+    if (res?.statusCode == 401 &&
+        _instanceMap[domain]!.onUnauthorized != null) {
+      await _instanceMap[domain]!.onUnauthorized!();
+      req.headers.addAll(_instanceMap[domain]!._config.headers);
+    }
   }
 
   @override
