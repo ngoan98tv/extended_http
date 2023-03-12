@@ -13,6 +13,9 @@ enum CachePolicy {
 }
 
 enum AuthStrategy {
+  /// Do not use auth strategy
+  None,
+
   /// Enable authorization using Access Tokens and Refresh Tokens pair.
   OAuth2,
 }
@@ -21,6 +24,7 @@ class HttpConfig {
   String baseURL;
   Duration timeout;
   CachePolicy cachePolicy;
+  AuthStrategy authStrategy;
   Map<String, String> headers;
 
   bool logURL;
@@ -33,6 +37,7 @@ class HttpConfig {
     this.headers = const {},
     this.timeout = const Duration(seconds: 10),
     this.cachePolicy = CachePolicy.NetworkFirst,
+    this.authStrategy = AuthStrategy.None,
     this.logURL = true,
     this.logRequestHeader = false,
     this.logRespondHeader = false,
