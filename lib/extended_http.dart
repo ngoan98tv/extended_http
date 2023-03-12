@@ -48,20 +48,17 @@ class ExtendedHttp extends BaseClient {
     if (error is TimeoutException) {
       return true;
     }
-    if (_instanceMap[domain]!.onError != null) {
-      return _instanceMap[domain]!.onError!(error, stack);
-    }
-    return false;
+    return _instanceMap[domain]!.onError?.call(error, stack) ?? false;
   }
 
   static bool _shouldRetry(String domain, BaseResponse res) {
     if (res.statusCode == 503) {
       return true;
     }
-    if (_instanceMap[domain]!.shouldRetry != null) {
-      return _instanceMap[domain]!.shouldRetry!(res);
+    if (res.statusCode == 401 && _instanceMap[domain]!.onUnauthorized != null) {
+      return true;
     }
-    return false;
+    return _instanceMap[domain]!.shouldRetry?.call(res) ?? false;
   }
 
   static Future<void> _beforeRetry(
@@ -79,10 +76,6 @@ class ExtendedHttp extends BaseClient {
     }
   }
 
-  /// YOU MUST DEFINE `shouldRetry` FUNCTION TO MAKE THIS WORK
-  ///
-  /// Add `return response.statusCode == 401` into `shouldRetry` to trigger this
-  ///
   /// Here we can get token and update headers to authorize the request
   ///
   /// The request will automatically retry after this
