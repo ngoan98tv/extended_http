@@ -45,4 +45,20 @@ void main() {
 
     expect(uri.toString(), "http://pub.dev/api?debugId=123");
   });
+
+  test('create uri for multiple domains', () async {
+    ExtendedHttp('domain1').config(
+      baseURL: 'http://domain1.com',
+    );
+
+    ExtendedHttp('domain2').config(
+      baseURL: 'http://domain2.com',
+    );
+
+    final uri1 = ExtendedHttp('domain1').createURI('/api/users');
+    final uri2 = ExtendedHttp('domain2').createURI('/api/posts');
+
+    expect(uri1.toString(), "http://domain1.com/api/users");
+    expect(uri2.toString(), "http://domain2.com/api/posts");
+  });
 }
