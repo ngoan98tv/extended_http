@@ -10,12 +10,13 @@ import 'package:http/retry.dart';
 class ExtendedHttp extends BaseClient {
   /// YOU MUST DEFINE `shouldRetry` FUNCTION TO MAKE THIS WORK
   ///
-  /// Add `return response.statusCode == 401` into `shouldRetry` to trigger this
+  /// Add `return response.statusCode == 401` into `shouldRetry` to trigger this,
+  /// Remember to exclude auth paths such as: `/login`, `/refresh-token`
   ///
-  /// Here we can get token and update headers to authorize the request
+  /// Here we can get token and update headers to re-authorize the requests
   ///
   /// The request will automatically retry after this
-  Future<void> Function()? onUnauthorized;
+  Future<void> Function(Map<String, dynamic>? authData)? onUnauthorized;
 
   /// Called when a request failed to check if it should be retried or not
   ///
@@ -83,6 +84,22 @@ class ExtendedHttp extends BaseClient {
     );
   }
 
+  /// Save auth data (access token, refresh token,...) for use later
+  /// in `onUnauthorized` method, it can also be accessed using `getAuthData()`
+  void saveAuthData(Map<String, dynamic> data) async {
+    _store.putToken('auth', jsonEncode(data));
+  }
+
+  /// Get saved auth data if existed.
+  Map<String, dynamic>? getAuthData() {
+    Map<String, dynamic>? authData;
+    final jsonData = _store.getToken('auth');
+    if (jsonData != null) {
+      authData = jsonDecode(jsonData) as Map<String, dynamic>;
+    }
+    return authData;
+  }
+
   late Store _store;
   final String _domain;
   final Client _client;
@@ -143,7 +160,8 @@ class ExtendedHttp extends BaseClient {
     _instanceMap[domain]!._log("Headers ${req.headers}");
     if (res?.statusCode == 401 &&
         _instanceMap[domain]!.onUnauthorized != null) {
-      await _instanceMap[domain]!.onUnauthorized!();
+      final authData = _instanceMap[domain]!.getAuthData();
+      await _instanceMap[domain]!.onUnauthorized!(authData);
       req.headers.addAll(_instanceMap[domain]!._config.headers);
     }
   }
