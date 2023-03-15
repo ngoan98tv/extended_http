@@ -47,10 +47,12 @@ class ExtendedHttp extends BaseClient {
     bool? logRespondHeaders,
     bool? logRespondBody,
   }) {
-    _config.timeout = timeout ?? _config.timeout;
-    _config.baseURL = baseURL ?? _config.baseURL;
-    _config.cachePolicy = cachePolicy ?? _config.cachePolicy;
     _config.headers.addAll(headers ?? {});
+
+    _config.baseURL = baseURL ?? _config.baseURL;
+    _config.timeout = timeout ?? _config.timeout;
+    _config.cachePolicy = cachePolicy ?? _config.cachePolicy;
+
     _config.logURL = logURL ?? _config.logURL;
     _config.logRequestHeader = logRequestHeaders ?? _config.logRequestHeader;
     _config.logRespondHeader = logRespondHeaders ?? _config.logRespondHeader;
@@ -86,12 +88,12 @@ class ExtendedHttp extends BaseClient {
 
   /// Save auth data (access token, refresh token,...) for use later
   /// in `onUnauthorized` method, it can also be accessed using `getAuthData()`
-  void saveAuthData(Map<String, dynamic> data) async {
+  void setAuthData(Map<String, dynamic> data) async {
     _store.putToken('auth', jsonEncode(data));
   }
 
   /// Get saved auth data if existed.
-  Map<String, dynamic>? getAuthData() {
+  Map<String, dynamic>? get authData {
     Map<String, dynamic>? authData;
     final jsonData = _store.getToken('auth');
     if (jsonData != null) {
@@ -99,6 +101,14 @@ class ExtendedHttp extends BaseClient {
     }
     return authData;
   }
+
+  /// Override headers setting
+  void setHeaders(Map<String, String>? headers) {
+    _config.headers.addAll(headers ?? {});
+  }
+
+  /// Get current headers
+  Map<String, String> get headers => _config.headers;
 
   late Store _store;
   final String _domain;
@@ -160,7 +170,7 @@ class ExtendedHttp extends BaseClient {
     _instanceMap[domain]!._log("Headers ${req.headers}");
     if (res?.statusCode == 401 &&
         _instanceMap[domain]!.onUnauthorized != null) {
-      final authData = _instanceMap[domain]!.getAuthData();
+      final authData = _instanceMap[domain]!.authData;
       await _instanceMap[domain]!.onUnauthorized!(authData);
       req.headers.addAll(_instanceMap[domain]!._config.headers);
     }
