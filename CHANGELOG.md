@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.0.0] - Mar 15, 2023
+
+- New `CachePolicy` with 3 options:
+  - `NetworkFirst` Fetch data from network, if failed, fetch from cache.
+  - `CacheFirst` Fetch data from cache, if not existed, fetch from network.
+  - `NoCache` Only fetch data from network. Never store data in cache.
+
+- Support multiple instances for multiple API domains, example:
+  - `ExtendedHttp()` => get/set for default instance
+  - `ExtendedHttp("domain1")` => get/set for instance of domain1
+  - `ExtendedHttp("domain2")` => get/set for instance of domain2
+
+- Add `debugId` to easy filter out relevant logs when debugging, example
+
+    ```dart
+    ExtendedHttp().createURI(
+      '/api',
+      debugId: '123',
+    )
+    ```
+
+- Add `authData` for easy saving user credential, it can be used to store token or current user data.
+  - Setter: `setAuthData(Map<String, dynamic> data)`
+  - Getter: `authData`
+  - Method of `onUnauthorized` now also have `authData` as parameter.
+
+- Add getter `headers` to get current headers and setter `setHeaders`
+
 ## [0.3.5] - Feb 15, 2023
 
 - Fix log error when response body is null
