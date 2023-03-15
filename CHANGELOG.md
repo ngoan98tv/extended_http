@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - Mar 15, 2023
+
+- Update package description
+
 ## [1.0.1] - Mar 15, 2023
 
 - Support custom config on each path, example
