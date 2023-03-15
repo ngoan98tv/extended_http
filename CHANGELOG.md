@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.1] - Mar 15, 2023
+
+- Support custom config on each path, example
+  
+  ```dart
+  createURI(
+      '/api/posts',
+      overrideConfig: HttpOptionalConfig(
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      ),
+    )
+  ```
+
 ## [1.0.0] - Mar 15, 2023
 
 - New `CachePolicy` with 3 options:

@@ -1,6 +1,9 @@
 name: extended_http
-description: It extends HTTP package then combine with Hive to provide cache. It also supports authorization via custom headers.
-version: 1.0.0
+description:
+  Extends HTTP package and combine with Hive to provide cache, store user credential,
+  and also predefined authorization workflow, set global/specified request headers,
+  beautiful logs and easy debugging with request debugId
+version: 1.0.1
 homepage: https://github.com/ngoan98tv/extended_http
 
 environment:

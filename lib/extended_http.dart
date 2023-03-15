@@ -43,31 +43,36 @@ class ExtendedHttp extends BaseClient {
     CachePolicy? cachePolicy,
     Map<String, String>? headers,
     bool? logURL,
-    bool? logRequestHeaders,
-    bool? logRespondHeaders,
+    bool? logRequestHeader,
+    bool? logRespondHeader,
     bool? logRespondBody,
   }) {
-    _config.headers.addAll(headers ?? {});
-
-    _config.baseURL = baseURL ?? _config.baseURL;
-    _config.timeout = timeout ?? _config.timeout;
-    _config.cachePolicy = cachePolicy ?? _config.cachePolicy;
-
-    _config.logURL = logURL ?? _config.logURL;
-    _config.logRequestHeader = logRequestHeaders ?? _config.logRequestHeader;
-    _config.logRespondHeader = logRespondHeaders ?? _config.logRespondHeader;
-    _config.logRespondBody = logRespondBody ?? _config.logRespondBody;
+    _config.add(
+      HttpOptionalConfig(
+        baseURL: baseURL,
+        timeout: timeout,
+        cachePolicy: cachePolicy,
+        headers: headers,
+        logURL: logURL,
+        logRequestHeader: logRequestHeader,
+        logRespondHeader: logRespondHeader,
+        logRespondBody: logRespondBody,
+      ),
+    );
   }
 
   /// Create an URI with baseURL prefix
   ///
   /// The result with be `baseURL` + `path` + `params`
   ///
-  /// A `debugId` can be added to easy filter out relevant logs
+  /// `debugId` can be added to easy filter out relevant logs
+  ///
+  /// `overrideConfig` used to override global configs
   Uri createURI(
     String path, {
     String? debugId,
     Map<String, String>? params,
+    HttpOptionalConfig? overrideConfig,
   }) {
     final u = Uri.parse(_config.baseURL + path);
     Map<String, String> queryParameters = {};
@@ -76,6 +81,9 @@ class ExtendedHttp extends BaseClient {
     }
     if (params != null) {
       queryParameters.addAll(params);
+    }
+    if (overrideConfig != null) {
+      _configMap.addAll({u.path: overrideConfig});
     }
     return Uri(
       scheme: u.scheme,
@@ -102,12 +110,12 @@ class ExtendedHttp extends BaseClient {
     return authData;
   }
 
-  /// Override headers setting
+  /// Override global headers setting
   void setHeaders(Map<String, String>? headers) {
     _config.headers.addAll(headers ?? {});
   }
 
-  /// Get current headers
+  /// Get current global headers
   Map<String, String> get headers => _config.headers;
 
   late Store _store;
@@ -116,9 +124,8 @@ class ExtendedHttp extends BaseClient {
   final Logger _logger = Logger("ExtendedHttp");
   final HttpConfig _config = HttpConfig();
 
-  bool get _disableCache => _config.cachePolicy == CachePolicy.NoCache;
-  bool get _cacheFirst => _config.cachePolicy == CachePolicy.CacheFirst;
-  bool get _networkFirst => _config.cachePolicy == CachePolicy.NetworkFirst;
+  /// Specified config for different API paths
+  final Map<String, HttpOptionalConfig> _configMap = {};
 
   static final Map<String, ExtendedHttp> _instanceMap = {};
 
@@ -140,10 +147,35 @@ class ExtendedHttp extends BaseClient {
     return _instanceMap[domain]!;
   }
 
+  factory ExtendedHttp.from(Client client, [String domain = 'default']) {
+    if (!_instanceMap.containsKey(domain)) {
+      _instanceMap[domain] = ExtendedHttp._internal(
+        domain,
+        RetryClient(
+          client,
+          when: (BaseResponse res) => _shouldRetry(domain, res),
+          whenError: (Object error, StackTrace stack) =>
+              _shouldRetryError(domain, error, stack),
+          onRetry: (BaseRequest req, BaseResponse? res, int retryCount) =>
+              _beforeRetry(domain, req, res, retryCount),
+        ),
+      );
+      _instanceMap[domain]!.init();
+    }
+    return _instanceMap[domain]!;
+  }
+
   ExtendedHttp._internal(this._domain, this._client);
 
   void init() {
     _store = Store(_domain);
+  }
+
+  HttpConfig getConfig([Uri? uri]) {
+    if (uri != null && _configMap.containsKey(uri.path)) {
+      return _config.clone()..add(_configMap[uri.path]!);
+    }
+    return _config;
   }
 
   static bool _shouldRetryError(String domain, Object error, StackTrace stack) {
@@ -166,30 +198,38 @@ class ExtendedHttp extends BaseClient {
     BaseResponse? res,
     int retryCount,
   ) async {
-    _instanceMap[domain]!._log("Retry ($retryCount) ${req.method} ${req.url}");
-    _instanceMap[domain]!._log("Headers ${req.headers}");
-    if (res?.statusCode == 401 &&
-        _instanceMap[domain]!.onUnauthorized != null) {
-      final authData = _instanceMap[domain]!.authData;
-      await _instanceMap[domain]!.onUnauthorized!(authData);
-      req.headers.addAll(_instanceMap[domain]!._config.headers);
+    final instance = _instanceMap[domain]!;
+
+    instance._log("Retry ($retryCount) ${req.method} ${req.url}");
+    instance._log("Headers ${req.headers}");
+
+    if (res?.statusCode == 401 && instance.onUnauthorized != null) {
+      final authData = instance.authData;
+      await instance.onUnauthorized!(authData);
+
+      final config = instance.getConfig(req.url);
+      req.headers.addAll(config.headers);
     }
   }
 
   @override
   Future<StreamedResponse> send(BaseRequest request) async {
     final debugId = request.url.queryParameters['debugId'];
+    final config = getConfig(request.url);
+    final disableCache = config.cachePolicy == CachePolicy.NoCache;
+    final cacheFirst = config.cachePolicy == CachePolicy.CacheFirst;
+    final networkFirst = config.cachePolicy == CachePolicy.NetworkFirst;
 
-    request.headers.addAll(_config.headers);
+    request.headers.addAll(config.headers);
 
-    if (_config.logURL) {
+    if (config.logURL) {
       _log("${request.method} ${request.url}", debugId: debugId);
     }
-    if (_config.logRequestHeader) {
+    if (config.logRequestHeader) {
       _log("Request headers", json: request.headers, debugId: debugId);
     }
 
-    if (request.method == 'GET' && _cacheFirst) {
+    if (request.method == 'GET' && cacheFirst) {
       _log("Read from cache", debugId: debugId);
       final cachedResponse = _responseFromCache(request.url);
       if (cachedResponse != null) {
@@ -199,10 +239,10 @@ class ExtendedHttp extends BaseClient {
       _log("Cache empty. Send request.", debugId: debugId);
     }
 
-    final response = await _client.send(request).timeout(_config.timeout);
+    final response = await _client.send(request).timeout(config.timeout);
     final bodyString = await response.stream.bytesToString();
 
-    if (_config.logRespondHeader) {
+    if (config.logRespondHeader) {
       _log(
         "Response (${response.statusCode}) headers",
         json: response.headers,
@@ -210,7 +250,7 @@ class ExtendedHttp extends BaseClient {
       );
     }
 
-    if (_config.logRespondBody) {
+    if (config.logRespondBody) {
       _log(
         "${request.method} (${response.statusCode}) ${request.url}",
         json: bodyString,
@@ -218,12 +258,12 @@ class ExtendedHttp extends BaseClient {
       );
     }
 
-    if (request.method == 'GET' && !_disableCache) {
+    if (request.method == 'GET' && !disableCache) {
       if (response.statusCode == 200) {
         _log("Write to cache", debugId: debugId);
         await _cacheResponse(request.url, bodyString, response.headers);
       } else {
-        if (_networkFirst) {
+        if (networkFirst) {
           final cachedResponse = _responseFromCache(request.url);
           if (cachedResponse != null) {
             _log("Return cached response", debugId: debugId);
@@ -266,6 +306,7 @@ class ExtendedHttp extends BaseClient {
     final cacheKey = uri.toString();
     final bodyString = _store.getBody(cacheKey);
     final headerString = _store.getHeader(cacheKey);
+    final config = getConfig(uri);
 
     if (bodyString == null || bodyString.isEmpty) {
       return null;
@@ -274,11 +315,11 @@ class ExtendedHttp extends BaseClient {
     final headerMap = jsonDecode(headerString ?? "{}") as Map<String, dynamic>;
     final headers = headerMap.map((key, value) => MapEntry(key, "$value"));
 
-    if (_config.logRespondHeader) {
+    if (config.logRespondHeader) {
       _log("Cached (200) $cacheKey headers", json: headers);
     }
 
-    if (_config.logRespondBody) {
+    if (config.logRespondBody) {
       _log("Cached (200) $cacheKey body", json: bodyString);
     }
 

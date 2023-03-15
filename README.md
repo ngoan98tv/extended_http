@@ -10,6 +10,8 @@ A Flutter HTTP package supports authorization and caching
 
 ## Features
 
+- Configuration for multiple API domains
+- Built-in `authData` storage to simply store token or user credential
 - Handle unauthorized requests by define `onUnauthorized` method
 - Specify when to retry the requests via `shouldRetry` & `onError` method
 - Cache API response (for GET requests)
@@ -21,9 +23,6 @@ All methods from `BaseClient` is inherited, including `get`, `post`, `put`, `pat
 
 ## TODO
 
-- Support multiple API domains, alternative domains.
-- Support auto authentication with access and refresh token.
-- Support different caching options to specific paths.
 - Support fake responses for testing
 
 ## Dependencies

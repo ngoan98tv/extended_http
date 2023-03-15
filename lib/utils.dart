@@ -35,4 +35,51 @@ class HttpConfig {
   }) {
     headers = {};
   }
+
+  void add(HttpOptionalConfig other) {
+    headers.addAll(other.headers ?? {});
+    baseURL = other.baseURL ?? baseURL;
+    timeout = other.timeout ?? timeout;
+    cachePolicy = other.cachePolicy ?? cachePolicy;
+    logURL = other.logURL ?? logURL;
+    logRequestHeader = other.logRequestHeader ?? logRequestHeader;
+    logRespondHeader = other.logRespondHeader ?? logRespondHeader;
+    logRespondBody = other.logRespondBody ?? logRespondBody;
+  }
+
+  HttpConfig clone() {
+    return HttpConfig(
+      headers: headers,
+      baseURL: baseURL,
+      timeout: timeout,
+      cachePolicy: cachePolicy,
+      logURL: logURL,
+      logRequestHeader: logRequestHeader,
+      logRespondHeader: logRespondHeader,
+      logRespondBody: logRespondBody,
+    );
+  }
+}
+
+class HttpOptionalConfig {
+  String? baseURL;
+  Duration? timeout;
+  CachePolicy? cachePolicy;
+  Map<String, String>? headers;
+
+  bool? logURL;
+  bool? logRequestHeader;
+  bool? logRespondHeader;
+  bool? logRespondBody;
+
+  HttpOptionalConfig({
+    this.baseURL,
+    this.headers,
+    this.timeout,
+    this.cachePolicy,
+    this.logURL,
+    this.logRequestHeader,
+    this.logRespondHeader,
+    this.logRespondBody,
+  });
 }
