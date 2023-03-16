@@ -1,3 +1,5 @@
+import 'package:http_parser/http_parser.dart';
+
 enum CachePolicy {
   /// Fetch data from network, if failed, fetch from cache.
   NetworkFirst,
@@ -82,4 +84,25 @@ class HttpOptionalConfig {
     this.logRespondHeader,
     this.logRespondBody,
   });
+}
+
+class MimeType extends MediaType {
+  MimeType(super.type, super.subtype, [super.parameters]);
+
+  /// Create MimeType from string of `type/subtype;parameter=value`
+  factory MimeType.fromString(String value) {
+    var separatorIndex = value.indexOf('/');
+    var type = value.substring(0, separatorIndex);
+    var subtype = value.substring(separatorIndex + 1);
+    var hasParam = subtype.indexOf(';');
+    Map<String, String>? parameters;
+    if (hasParam > 0) {
+      var param = subtype.substring(hasParam + 1).trim().split('=');
+      subtype = subtype.substring(0, hasParam);
+      parameters = {
+        param[0]: param[1],
+      };
+    }
+    return MimeType(type, subtype, parameters);
+  }
 }

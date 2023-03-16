@@ -5,7 +5,6 @@ import 'package:extended_http/store.dart';
 import 'package:extended_http/utils.dart';
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
-import 'package:http_parser/http_parser.dart';
 
 /// Extend from `BaseClient`, adding caching and timeout features.
 class ExtendedHttp extends BaseClient {
@@ -120,30 +119,30 @@ class ExtendedHttp extends BaseClient {
   Map<String, String> get headers => _config.headers;
 
   Future<MultipartFile> createFileFromPath(
-    String fieldName,
-    String filePath, {
-    String? filename,
-    MediaType? contentType,
+    String fieldName, {
+    required String path,
+    required String filename,
+    required MimeType mimeType,
   }) {
     return MultipartFile.fromPath(
       fieldName,
-      filePath,
+      path,
       filename: filename,
-      contentType: contentType,
+      contentType: mimeType,
     );
   }
 
   MultipartFile createFileFromBytes(
-    String fieldName,
-    List<int> bytes, {
-    String? filename,
-    MediaType? contentType,
+    String fieldName, {
+    required List<int> bytes,
+    required String filename,
+    required MimeType mimeType,
   }) {
     return MultipartFile.fromBytes(
       fieldName,
       bytes,
       filename: filename,
-      contentType: contentType,
+      contentType: mimeType,
     );
   }
 
@@ -153,59 +152,17 @@ class ExtendedHttp extends BaseClient {
     String method = "POST",
     Map<String, String>? fields,
   }) async {
-    final config = getConfig(uri);
-    final debugId = uri.queryParameters['debugId'];
+    final request = MultipartRequest(method, uri)
+      ..files.addAll(files)
+      ..fields.addAll(fields ?? {});
 
-    final request = MultipartRequest(method, uri);
-
-    request.files.addAll(files);
-
-    if (fields != null) {
-      request.fields.addAll(fields);
-    }
-
-    if (config.logURL) {
-      _log("${request.method} ${request.url}", debugId: debugId);
-    }
-
-    if (config.logRequestHeader) {
-      _log("Request headers", json: request.headers, debugId: debugId);
-    }
-
-    final response = await request.send().timeout(config.timeout);
-
-    final bodyString = await response.stream.bytesToString();
-
-    if (config.logRespondHeader) {
-      _log(
-        "Response (${response.statusCode}) headers",
-        json: response.headers,
-        debugId: debugId,
-      );
-    }
-
-    if (config.logRespondBody) {
-      _log(
-        "${request.method} (${response.statusCode}) ${request.url}",
-        json: bodyString,
-        debugId: debugId,
-      );
-    }
-
-    return StreamedResponse(
-      Stream.value(utf8.encode(bodyString)),
-      response.statusCode,
-      headers: response.headers,
-      reasonPhrase: response.reasonPhrase,
-      contentLength: response.contentLength,
-      request: response.request,
-    );
+    return send(request);
   }
 
   late Store _store;
   final String _domain;
   final Client _client;
-  final Logger _logger = Logger("ExtendedHttp");
+  final Logger _logger = Logger("ExHttp");
   final HttpConfig _config = HttpConfig();
 
   /// Specified config for different API paths

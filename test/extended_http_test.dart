@@ -114,4 +114,12 @@ void main() {
     expect(instance1, same(ExtendedHttp('domain1')));
     expect(instance2, same(ExtendedHttp('domain2')));
   });
+
+  test('create mime type from string', () async {
+    final t = MimeType.fromString("text/plain; charset=utf8");
+
+    expect(t.type, 'text');
+    expect(t.subtype, 'plain');
+    expect(t.parameters, containsPair('charset', 'utf8'));
+  });
 }
