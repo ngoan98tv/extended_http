@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.2] - Mar 17, 2023
+
+- Support upload file, example
+  
+  ```dart
+  final file = createFileFromBytes(
+    'file',
+    bytes: bytes,
+    filename: filename,
+    mimeType: MimeType('image', 'jpg'),
+  );
+  final uri = createURI('/api/upload');
+  sendFile(uri, [file]);
+  ```
+
 ## [1.0.2] - Mar 15, 2023
 
 - Update package description
