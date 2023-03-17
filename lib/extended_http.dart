@@ -185,7 +185,7 @@ class ExtendedHttp extends BaseClient {
               _beforeRetry(domain, req, res, retryCount),
         ),
       );
-      _instanceMap[domain]!.init();
+      _instanceMap[domain]!._init();
     }
     return _instanceMap[domain]!;
   }
@@ -203,15 +203,19 @@ class ExtendedHttp extends BaseClient {
               _beforeRetry(domain, req, res, retryCount),
         ),
       );
-      _instanceMap[domain]!.init();
+      _instanceMap[domain]!._init();
     }
     return _instanceMap[domain]!;
   }
 
   ExtendedHttp._internal(this._domain, this._client);
 
-  void init() {
+  void _init() {
     _store = Store(_domain);
+  }
+
+  Future<void> ensureInitialized() async {
+    await _store.ensureInitialized();
   }
 
   HttpConfig getConfig([Uri? uri]) {

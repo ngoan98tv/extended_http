@@ -124,4 +124,16 @@ void main() {
     expect(t.subtype, 'plain');
     expect(t.parameters, containsPair('charset', 'utf8'));
   });
+
+  test('save auth data', () async {
+    final instance = ExtendedHttp('auth');
+
+    await instance.ensureInitialized();
+
+    final data = {"token": "123"};
+
+    instance.setAuthData(data);
+
+    expect(instance.authData, containsPair('token', '123'));
+  });
 }
