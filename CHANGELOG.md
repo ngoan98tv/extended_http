@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.5] - Mar 17, 2023
+
+- Improve `ensureInitialized()`
+
 ## [1.1.4] - Mar 17, 2023
 
 - Add `ensureInitialized()`, await it before access `authData`
