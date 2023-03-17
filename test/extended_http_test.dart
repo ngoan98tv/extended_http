@@ -14,6 +14,8 @@ void main() {
       baseURL: 'http://pub.dev',
     );
 
+    await ExtendedHttp().ensureInitialized();
+
     final uri = ExtendedHttp().createURI('/api', debugId: '1');
 
     expect(uri.toString(), "http://pub.dev/api?debugId=1");
@@ -23,6 +25,8 @@ void main() {
     ExtendedHttp().config(
       baseURL: 'http://pub.dev',
     );
+
+    await ExtendedHttp().ensureInitialized();
 
     final uri = ExtendedHttp().createURI(
       '/api',
@@ -39,6 +43,8 @@ void main() {
     ExtendedHttp().config(
       baseURL: 'http://pub.dev',
     );
+
+    await ExtendedHttp().ensureInitialized();
 
     final uri = ExtendedHttp().createURI(
       '/api',
@@ -57,6 +63,9 @@ void main() {
       baseURL: 'http://domain2.com',
     );
 
+    await ExtendedHttp('domain1').ensureInitialized();
+    await ExtendedHttp('domain2').ensureInitialized();
+
     final uri1 = ExtendedHttp('domain1').createURI('/api/users', debugId: '1');
     final uri2 = ExtendedHttp('domain2').createURI('/api/posts', debugId: '1');
 
@@ -73,6 +82,8 @@ void main() {
         "Content-Type": "application/json",
       },
     );
+
+    await http.ensureInitialized();
 
     final uri1 = http.createURI('/api/users', debugId: '1');
     final uri2 = http.createURI(
@@ -111,6 +122,9 @@ void main() {
   test('check if instances are singleton', () async {
     final instance1 = ExtendedHttp('domain1');
     final instance2 = ExtendedHttp('domain2');
+
+    await instance1.ensureInitialized();
+    await instance2.ensureInitialized();
 
     expect(instance1, isNot(same(instance2)));
     expect(instance1, same(ExtendedHttp('domain1')));

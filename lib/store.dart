@@ -46,8 +46,9 @@ class Store {
   }
 
   Future<void> ensureInitialized() async {
+    if (_isInitialized) return;
     await Future.doWhile(() async {
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 50));
       return !_isInitialized;
     });
   }
