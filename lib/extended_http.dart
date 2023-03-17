@@ -74,11 +74,11 @@ class ExtendedHttp extends BaseClient {
     Map<String, String>? params,
     HttpOptionalConfig? overrideConfig,
   }) {
+    _counter++;
     final u = Uri.parse(_config.baseURL + path);
-    Map<String, String> queryParameters = {};
-    if (debugId != null) {
-      queryParameters.addAll({"debugId": debugId});
-    }
+    Map<String, String> queryParameters = {
+      "debugId": debugId ?? "$_counter",
+    };
     if (params != null) {
       queryParameters.addAll(params);
     }
@@ -158,6 +158,8 @@ class ExtendedHttp extends BaseClient {
 
     return send(request);
   }
+
+  static int _counter = 0;
 
   late Store _store;
   final String _domain;
