@@ -14,9 +14,9 @@ void main() {
       baseURL: 'http://pub.dev',
     );
 
-    final uri = ExtendedHttp().createURI('/api');
+    final uri = ExtendedHttp().createURI('/api', debugId: '1');
 
-    expect(uri.toString(), "http://pub.dev/api");
+    expect(uri.toString(), "http://pub.dev/api?debugId=1");
   });
 
   test('create uri with parameters', () async {
@@ -29,9 +29,10 @@ void main() {
       params: {
         'value': '123',
       },
+      debugId: '1',
     );
 
-    expect(uri.toString(), "http://pub.dev/api?value=123");
+    expect(uri.toString(), "http://pub.dev/api?debugId=1&value=123");
   });
 
   test('create uri with debugId', () async {
@@ -56,11 +57,11 @@ void main() {
       baseURL: 'http://domain2.com',
     );
 
-    final uri1 = ExtendedHttp('domain1').createURI('/api/users');
-    final uri2 = ExtendedHttp('domain2').createURI('/api/posts');
+    final uri1 = ExtendedHttp('domain1').createURI('/api/users', debugId: '1');
+    final uri2 = ExtendedHttp('domain2').createURI('/api/posts', debugId: '1');
 
-    expect(uri1.toString(), "http://domain1.com/api/users");
-    expect(uri2.toString(), "http://domain2.com/api/posts");
+    expect(uri1.toString(), "http://domain1.com/api/users?debugId=1");
+    expect(uri2.toString(), "http://domain2.com/api/posts?debugId=1");
   });
 
   test('create custom config for a specified path', () async {
@@ -73,7 +74,7 @@ void main() {
       },
     );
 
-    final uri1 = http.createURI('/api/users');
+    final uri1 = http.createURI('/api/users', debugId: '1');
     final uri2 = http.createURI(
       '/api/posts',
       overrideConfig: HttpOptionalConfig(
@@ -81,12 +82,13 @@ void main() {
           "Content-Type": "application/x-www-form-urlencoded",
         },
       ),
+      debugId: '1',
     );
-    final uri3 = http.createURI('/api/profile');
+    final uri3 = http.createURI('/api/profile', debugId: '1');
 
-    expect(uri1.toString(), "http://domain.com/api/users");
-    expect(uri2.toString(), "http://domain.com/api/posts");
-    expect(uri3.toString(), "http://domain.com/api/profile");
+    expect(uri1.toString(), "http://domain.com/api/users?debugId=1");
+    expect(uri2.toString(), "http://domain.com/api/posts?debugId=1");
+    expect(uri3.toString(), "http://domain.com/api/profile?debugId=1");
 
     expect(
       http.headers,
