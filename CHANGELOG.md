@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - Mar 17, 2023
+
+- Fix missing package
+- Set default `debugId`
+
 ## [1.1.2] - Mar 17, 2023
 
 - Support upload file, example
