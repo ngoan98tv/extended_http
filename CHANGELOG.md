@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.6] - Mar 20, 2023
+
+- Clear auth data by calling `setAuthData(null)`
+
 ## [1.1.5] - Mar 17, 2023
 
 - Improve `ensureInitialized()`
