@@ -150,4 +150,20 @@ void main() {
 
     expect(instance.authData, containsPair('token', '123'));
   });
+
+  test('remove auth data', () async {
+    final instance = ExtendedHttp('auth');
+
+    await instance.ensureInitialized();
+
+    final data = {"token": "123"};
+
+    instance.setAuthData(data);
+
+    expect(instance.authData, containsPair('token', '123'));
+
+    instance.setAuthData(null);
+
+    expect(instance.authData, null);
+  });
 }

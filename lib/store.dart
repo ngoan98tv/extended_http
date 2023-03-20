@@ -53,6 +53,13 @@ class Store {
     });
   }
 
+  void removeToken(String key) {
+    if (_httpToken == null) {
+      throw Exception("httpToken is not initialized");
+    }
+    _httpToken?.delete(key);
+  }
+
   void putToken(String key, String value) {
     if (_httpToken == null) {
       throw Exception("httpToken is not initialized");

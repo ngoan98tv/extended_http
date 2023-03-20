@@ -96,7 +96,11 @@ class ExtendedHttp extends BaseClient {
 
   /// Save auth data (access token, refresh token,...) for use later
   /// in `onUnauthorized` method, it can also be accessed using `getAuthData()`
-  void setAuthData(Map<String, dynamic> data) async {
+  void setAuthData(Map<String, dynamic>? data) {
+    if (data == null) {
+      _store.removeToken('auth');
+      return;
+    }
     _store.putToken('auth', jsonEncode(data));
   }
 
