@@ -24,6 +24,7 @@ class HttpConfig {
   bool logRequestHeader;
   bool logRespondHeader;
   bool logRespondBody;
+  bool sendDebugId;
 
   HttpConfig({
     this.baseURL = '',
@@ -34,6 +35,7 @@ class HttpConfig {
     this.logRequestHeader = false,
     this.logRespondHeader = false,
     this.logRespondBody = false,
+    this.sendDebugId = false,
   }) {
     headers = {};
   }
@@ -47,6 +49,7 @@ class HttpConfig {
     logRequestHeader = other.logRequestHeader ?? logRequestHeader;
     logRespondHeader = other.logRespondHeader ?? logRespondHeader;
     logRespondBody = other.logRespondBody ?? logRespondBody;
+    sendDebugId = other.sendDebugId ?? sendDebugId;
   }
 
   HttpConfig clone() {
@@ -59,6 +62,7 @@ class HttpConfig {
       logRequestHeader: logRequestHeader,
       logRespondHeader: logRespondHeader,
       logRespondBody: logRespondBody,
+      sendDebugId: sendDebugId,
     );
   }
 }
@@ -73,6 +77,7 @@ class HttpOptionalConfig {
   bool? logRequestHeader;
   bool? logRespondHeader;
   bool? logRespondBody;
+  bool? sendDebugId;
 
   HttpOptionalConfig({
     this.baseURL,
@@ -83,6 +88,7 @@ class HttpOptionalConfig {
     this.logRequestHeader,
     this.logRespondHeader,
     this.logRespondBody,
+    this.sendDebugId,
   });
 }
 

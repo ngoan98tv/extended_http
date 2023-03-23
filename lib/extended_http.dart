@@ -277,6 +277,10 @@ class ExtendedHttp extends BaseClient {
 
     request.headers.addAll(config.headers);
 
+    if (!config.sendDebugId) {
+      request.url.queryParameters.remove('debugId');
+    }
+
     if (config.logURL) {
       _log("${request.method} ${request.url}", debugId: debugId);
     }
@@ -286,7 +290,7 @@ class ExtendedHttp extends BaseClient {
 
     if (request.method == 'GET' && cacheFirst) {
       _log("Read from cache", debugId: debugId);
-      final cachedResponse = _responseFromCache(request.url);
+      final cachedResponse = _responseFromCache(request.url, debugId);
       if (cachedResponse != null) {
         _log("Return cached response", debugId: debugId);
         return cachedResponse;
@@ -319,7 +323,7 @@ class ExtendedHttp extends BaseClient {
         await _cacheResponse(request.url, bodyString, response.headers);
       } else {
         if (networkFirst && response.statusCode >= 500) {
-          final cachedResponse = _responseFromCache(request.url);
+          final cachedResponse = _responseFromCache(request.url, debugId);
           if (cachedResponse != null) {
             _log("Return cached response", debugId: debugId);
             return cachedResponse;
@@ -357,12 +361,11 @@ class ExtendedHttp extends BaseClient {
     );
   }
 
-  StreamedResponse? _responseFromCache(Uri uri) {
+  StreamedResponse? _responseFromCache(Uri uri, String? debugId) {
     final cacheKey = uri.toString();
     final bodyString = _store.getBody(cacheKey);
     final headerString = _store.getHeader(cacheKey);
     final config = getConfig(uri);
-    final debugId = uri.queryParameters['debugId'];
 
     if (bodyString == null || bodyString.isEmpty) {
       return null;
