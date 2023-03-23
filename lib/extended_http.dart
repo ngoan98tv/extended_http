@@ -318,7 +318,7 @@ class ExtendedHttp extends BaseClient {
         _log("Write to cache", debugId: debugId);
         await _cacheResponse(request.url, bodyString, response.headers);
       } else {
-        if (networkFirst) {
+        if (networkFirst && response.statusCode >= 500) {
           final cachedResponse = _responseFromCache(request.url);
           if (cachedResponse != null) {
             _log("Return cached response", debugId: debugId);
