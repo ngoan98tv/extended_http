@@ -249,10 +249,14 @@ class ExtendedHttp extends BaseClient {
     BaseResponse? res,
     int retryCount,
   ) async {
+    final debugId = req.url.queryParameters['debugId'];
     final instance = _instanceMap[domain]!;
 
-    instance._log("Retry ($retryCount) ${req.method} ${req.url}");
-    instance._log("Headers ${req.headers}");
+    instance._log(
+      "Retry ($retryCount) ${req.method} ${req.url}",
+      debugId: debugId,
+    );
+    instance._log("Headers ${req.headers}", debugId: debugId);
 
     if (res?.statusCode == 401 && instance.onUnauthorized != null) {
       final authData = instance.authData;
@@ -358,6 +362,7 @@ class ExtendedHttp extends BaseClient {
     final bodyString = _store.getBody(cacheKey);
     final headerString = _store.getHeader(cacheKey);
     final config = getConfig(uri);
+    final debugId = uri.queryParameters['debugId'];
 
     if (bodyString == null || bodyString.isEmpty) {
       return null;
@@ -367,11 +372,19 @@ class ExtendedHttp extends BaseClient {
     final headers = headerMap.map((key, value) => MapEntry(key, "$value"));
 
     if (config.logRespondHeader) {
-      _log("Cached (200) $cacheKey headers", json: headers);
+      _log(
+        "Cached (200) $cacheKey headers",
+        json: headers,
+        debugId: debugId,
+      );
     }
 
     if (config.logRespondBody) {
-      _log("Cached (200) $cacheKey body", json: bodyString);
+      _log(
+        "Cached (200) $cacheKey body",
+        json: bodyString,
+        debugId: debugId,
+      );
     }
 
     return StreamedResponse(
