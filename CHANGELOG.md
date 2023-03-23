@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.7] - Mar 23, 2023
+
+- Add option `sendDebugId` to specify whether send the `debugId` to server or not.
+- When set `CachePolicy.networkFirst`, only return cached response when the request failed due to server error (`statusCode >= 500`)
+
 ## [1.1.6] - Mar 20, 2023
 
 - Clear auth data by calling `setAuthData(null)`
