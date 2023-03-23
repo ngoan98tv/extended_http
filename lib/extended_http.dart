@@ -46,6 +46,7 @@ class ExtendedHttp extends BaseClient {
     bool? logRequestHeader,
     bool? logRespondHeader,
     bool? logRespondBody,
+    bool? sendDebugId,
   }) {
     _config.add(
       HttpOptionalConfig(
@@ -57,6 +58,7 @@ class ExtendedHttp extends BaseClient {
         logRequestHeader: logRequestHeader,
         logRespondHeader: logRespondHeader,
         logRespondBody: logRespondBody,
+        sendDebugId: sendDebugId,
       ),
     );
   }
