@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.9] - Mar 27, 2023
+## [1.1.10] - Mar 27, 2023
 
 - Fix `debugId` send error
 - Update test cases

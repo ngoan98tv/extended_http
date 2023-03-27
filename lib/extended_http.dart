@@ -287,10 +287,6 @@ class ExtendedHttp extends BaseClient {
 
     request.headers.addAll(config.headers);
 
-    if (!config.sendDebugId) {
-      request.url.queryParameters.remove('debugId');
-    }
-
     if (config.logURL) {
       _log("${request.method} ${request.url}", debugId: debugId);
     }
