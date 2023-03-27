@@ -12,6 +12,7 @@ void main() {
   test('create uri without parameters', () async {
     ExtendedHttp().config(
       baseURL: 'http://pub.dev',
+      sendDebugId: true,
     );
 
     await ExtendedHttp().ensureInitialized();
@@ -24,6 +25,7 @@ void main() {
   test('create uri with parameters', () async {
     ExtendedHttp().config(
       baseURL: 'http://pub.dev',
+      sendDebugId: true,
     );
 
     await ExtendedHttp().ensureInitialized();
@@ -36,12 +38,13 @@ void main() {
       debugId: '1',
     );
 
-    expect(uri.toString(), "http://pub.dev/api?debugId=1&value=123");
+    expect(uri.toString(), "http://pub.dev/api?value=123&debugId=1");
   });
 
   test('create uri with debugId', () async {
     ExtendedHttp().config(
       baseURL: 'http://pub.dev',
+      sendDebugId: true,
     );
 
     await ExtendedHttp().ensureInitialized();
@@ -54,13 +57,32 @@ void main() {
     expect(uri.toString(), "http://pub.dev/api?debugId=123");
   });
 
+  test('create uri without send debug id', () async {
+    ExtendedHttp().config(
+      baseURL: 'http://pub.dev',
+      sendDebugId: true,
+    );
+
+    await ExtendedHttp().ensureInitialized();
+
+    final uri = ExtendedHttp().createURI(
+      '/api',
+      debugId: '123',
+      overrideConfig: HttpOptionalConfig(sendDebugId: false),
+    );
+
+    expect(uri.toString(), "http://pub.dev/api");
+  });
+
   test('create uri for multiple domains', () async {
     ExtendedHttp('domain1').config(
       baseURL: 'http://domain1.com',
+      sendDebugId: true,
     );
 
     ExtendedHttp('domain2').config(
       baseURL: 'http://domain2.com',
+      sendDebugId: true,
     );
 
     await ExtendedHttp('domain1').ensureInitialized();
@@ -81,6 +103,7 @@ void main() {
       headers: {
         "Content-Type": "application/json",
       },
+      sendDebugId: true,
     );
 
     await http.ensureInitialized();

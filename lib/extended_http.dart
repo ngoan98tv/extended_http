@@ -37,6 +37,8 @@ class ExtendedHttp extends BaseClient {
   /// `cachePolicy` - Specify how cache should be processed, see more on `CachePolicy`, default `NetworkFirst`
   ///
   /// `headers` - Custom request headers, default `{}`.
+  ///
+  /// `sendDebugId` - Specify whether include `debugId` in request params or not, default `false`
   void config({
     String? baseURL,
     Duration? timeout,
@@ -78,15 +80,18 @@ class ExtendedHttp extends BaseClient {
   }) {
     _counter++;
     final u = Uri.parse(_config.baseURL + path);
-    Map<String, String> queryParameters = {
-      "debugId": debugId ?? "$_counter",
-    };
+    Map<String, String> queryParameters = {};
     if (params != null) {
       queryParameters.addAll(params);
     }
     if (overrideConfig != null) {
       _configMap.addAll({u.path: overrideConfig});
     }
+    if ((_config.sendDebugId && overrideConfig?.sendDebugId == null) ||
+        (overrideConfig?.sendDebugId == true)) {
+      queryParameters.addAll({"debugId": debugId ?? "$_counter"});
+    }
+    _debugIdMap.addAll({u.path: debugId ?? "$_counter"});
     return Uri(
       scheme: u.scheme,
       host: u.host,
@@ -176,6 +181,9 @@ class ExtendedHttp extends BaseClient {
   /// Specified config for different API paths
   final Map<String, HttpOptionalConfig> _configMap = {};
 
+  // Store debug id list
+  final Map<String, String> _debugIdMap = {};
+
   static final Map<String, ExtendedHttp> _instanceMap = {};
 
   factory ExtendedHttp([String domain = 'default']) {
@@ -251,8 +259,8 @@ class ExtendedHttp extends BaseClient {
     BaseResponse? res,
     int retryCount,
   ) async {
-    final debugId = req.url.queryParameters['debugId'];
     final instance = _instanceMap[domain]!;
+    final debugId = instance._debugIdMap[req.url.path];
 
     instance._log(
       "Retry ($retryCount) ${req.method} ${req.url}",
@@ -271,7 +279,7 @@ class ExtendedHttp extends BaseClient {
 
   @override
   Future<StreamedResponse> send(BaseRequest request) async {
-    final debugId = request.url.queryParameters['debugId'];
+    final debugId = _debugIdMap[request.url.path];
     final config = getConfig(request.url);
     final disableCache = config.cachePolicy == CachePolicy.NoCache;
     final cacheFirst = config.cachePolicy == CachePolicy.CacheFirst;

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.9] - Mar 27, 2023
+
+- Fix `debugId` send error
+- Update test cases
+
 ## [1.1.8] - Mar 23, 2023
 
 - Add option `sendDebugId` to specify whether send the `debugId` to server or not.
