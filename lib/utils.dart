@@ -14,6 +14,14 @@ enum CachePolicy {
   ControlHeader
 }
 
+enum HttpMethod {
+  GET,
+  POST,
+  PATCH,
+  PUT,
+  DELETE,
+}
+
 class HttpConfig {
   String baseURL;
   Duration timeout;

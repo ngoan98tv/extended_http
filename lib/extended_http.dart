@@ -170,6 +170,44 @@ class ExtendedHttp extends BaseClient {
     return send(request);
   }
 
+  Future<Map<String, dynamic>?> sendJsonRequest(
+    HttpMethod method,
+    String path, {
+    Object? body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+    String? debugId,
+    Map<String, String>? params,
+    HttpOptionalConfig? overrideConfig,
+  }) async {
+    final uri = createURI(
+      path,
+      debugId: debugId,
+      params: params,
+      overrideConfig: overrideConfig,
+    );
+
+    final request = Request(method.name, uri);
+
+    if (headers != null) request.headers.addAll(headers);
+    if (encoding != null) request.encoding = encoding;
+    if (body != null) {
+      if (body is List || body is Map) {
+        request.body = jsonEncode(body);
+      } else {
+        throw ArgumentError('Invalid request body "$body".');
+      }
+    }
+
+    final res = await Response.fromStream(await send(request));
+
+    if (res.body.isEmpty) {
+      return null;
+    }
+
+    return jsonDecode(res.body);
+  }
+
   static int _counter = 0;
 
   late Store _store;
