@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:extended_http/logger.dart';
 import 'package:extended_http/store.dart';
 import 'package:extended_http/utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:http/retry.dart';
 
@@ -195,7 +196,7 @@ class ExtendedHttp extends BaseClient {
     if (encoding != null) request.encoding = encoding;
     if (body != null) {
       if (body is List || body is Map) {
-        request.body = jsonEncode(body);
+        request.body = await compute((data) => jsonEncode(data), body);
       } else {
         throw ArgumentError('Invalid request body "$body".');
       }
@@ -207,7 +208,7 @@ class ExtendedHttp extends BaseClient {
       return null;
     }
 
-    return jsonDecode(res.body);
+    return compute((data) => jsonDecode(data), res.body);
   }
 
   static int _counter = 0;
