@@ -49,6 +49,7 @@ class ExtendedHttp extends BaseClient {
     bool? logRespondHeader,
     bool? logRespondBody,
     bool? sendDebugId,
+    bool? enableAuthLock,
   }) {
     _config.add(
       HttpOptionalConfig(
@@ -61,6 +62,7 @@ class ExtendedHttp extends BaseClient {
         logRespondHeader: logRespondHeader,
         logRespondBody: logRespondBody,
         sendDebugId: sendDebugId,
+        enableAuthLock: enableAuthLock,
       ),
     );
   }
@@ -210,6 +212,8 @@ class ExtendedHttp extends BaseClient {
 
   static int _counter = 0;
 
+  String? _locker;
+
   late Store _store;
   final String _domain;
   final Client _client;
@@ -307,9 +311,21 @@ class ExtendedHttp extends BaseClient {
     instance._log("Headers ${req.headers}", debugId: debugId);
 
     if (res?.statusCode == 401 && instance.onUnauthorized != null) {
-      final authData = instance.authData;
-      await instance.onUnauthorized!(authData);
-
+      if (instance._locker != null && instance._locker != debugId) {
+        instance._log("[Paused] ${req.method} ${req.url}", debugId: debugId);
+        await Future.doWhile(() async {
+          await Future.delayed(const Duration(seconds: 1));
+          return instance._locker != null;
+        });
+      } else {
+        final authData = instance.authData ?? {};
+        if (instance._config.enableAuthLock) {
+          instance._locker = "r$debugId";
+          authData.addAll({'locker': "r$debugId"});
+        }
+        await instance.onUnauthorized!(authData);
+        instance._locker = null;
+      }
       final config = instance.getConfig(req.url);
       req.headers.addAll(config.headers);
     }
@@ -318,6 +334,15 @@ class ExtendedHttp extends BaseClient {
   @override
   Future<StreamedResponse> send(BaseRequest request) async {
     final debugId = _debugIdMap[request.url.path];
+
+    if (_locker != null && _locker != debugId) {
+      _log("[Paused] ${request.method} ${request.url}", debugId: debugId);
+      await Future.doWhile(() async {
+        await Future.delayed(const Duration(seconds: 1));
+        return _locker != null;
+      });
+    }
+
     final config = getConfig(request.url);
     final disableCache = config.cachePolicy == CachePolicy.NoCache;
     final cacheFirst = config.cachePolicy == CachePolicy.CacheFirst;

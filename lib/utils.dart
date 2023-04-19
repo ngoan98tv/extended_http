@@ -33,6 +33,7 @@ class HttpConfig {
   bool logRespondHeader;
   bool logRespondBody;
   bool sendDebugId;
+  bool enableAuthLock;
 
   HttpConfig({
     this.baseURL = '',
@@ -44,6 +45,7 @@ class HttpConfig {
     this.logRespondHeader = false,
     this.logRespondBody = false,
     this.sendDebugId = false,
+    this.enableAuthLock = false,
   }) {
     headers = {};
   }
@@ -58,6 +60,7 @@ class HttpConfig {
     logRespondHeader = other.logRespondHeader ?? logRespondHeader;
     logRespondBody = other.logRespondBody ?? logRespondBody;
     sendDebugId = other.sendDebugId ?? sendDebugId;
+    enableAuthLock = other.enableAuthLock ?? enableAuthLock;
   }
 
   HttpConfig clone() {
@@ -71,6 +74,7 @@ class HttpConfig {
       logRespondHeader: logRespondHeader,
       logRespondBody: logRespondBody,
       sendDebugId: sendDebugId,
+      enableAuthLock: enableAuthLock,
     );
   }
 }
@@ -86,6 +90,7 @@ class HttpOptionalConfig {
   bool? logRespondHeader;
   bool? logRespondBody;
   bool? sendDebugId;
+  bool? enableAuthLock;
 
   HttpOptionalConfig({
     this.baseURL,
@@ -97,6 +102,7 @@ class HttpOptionalConfig {
     this.logRespondHeader,
     this.logRespondBody,
     this.sendDebugId,
+    this.enableAuthLock,
   });
 }
 
