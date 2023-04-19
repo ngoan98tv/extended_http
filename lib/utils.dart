@@ -126,3 +126,17 @@ class MimeType extends MediaType {
     return MimeType(type, subtype, parameters);
   }
 }
+
+class JsonResponse {
+  int code;
+  String text;
+  String? message;
+  Map<String, dynamic>? json;
+
+  JsonResponse({
+    required this.code,
+    required this.text,
+    this.message,
+    this.json,
+  });
+}

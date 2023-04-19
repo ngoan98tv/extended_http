@@ -173,7 +173,7 @@ class ExtendedHttp extends BaseClient {
     return send(request);
   }
 
-  Future<Map<String, dynamic>?> sendJsonRequest(
+  Future<JsonResponse> sendJsonRequest(
     HttpMethod method,
     String path, {
     Object? body,
@@ -203,12 +203,25 @@ class ExtendedHttp extends BaseClient {
     }
 
     final res = await Response.fromStream(await send(request));
+    Map<String, dynamic>? json;
 
-    if (res.body.isEmpty) {
-      return null;
+    if (res.body.isNotEmpty) {
+      json = await compute((data) {
+        try {
+          return jsonDecode(data);
+        } catch (e) {
+          debugPrint("Json Decode Error: $e");
+          return null;
+        }
+      }, res.body);
     }
 
-    return compute((data) => jsonDecode(data), res.body);
+    return JsonResponse(
+      code: res.statusCode,
+      text: res.body,
+      message: res.reasonPhrase,
+      json: json,
+    );
   }
 
   static int _counter = 0;
