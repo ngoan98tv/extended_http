@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.10] - Apr 19, 2023
+
+- Add `sendJsonRequest` method which is included json encode and decode
+- Add `enableAuthLock` option, if `true` the requests will be paused while `onUnauthorized` running.
+
 ## [1.1.10] - Mar 27, 2023
 
 - Fix `debugId` send error
