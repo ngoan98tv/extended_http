@@ -182,6 +182,7 @@ class ExtendedHttp extends BaseClient {
     String? debugId,
     Map<String, String>? params,
     HttpOptionalConfig? overrideConfig,
+    bool useIsolate = false,
   }) async {
     final uri = createURI(
       path,
@@ -196,7 +197,11 @@ class ExtendedHttp extends BaseClient {
     if (encoding != null) request.encoding = encoding;
     if (body != null) {
       if (body is List || body is Map) {
-        request.body = await compute((data) => jsonEncode(data), body);
+        if (useIsolate) {
+          request.body = await compute((data) => jsonEncode(data), body);
+        } else {
+          request.body = jsonEncode(body);
+        }
       } else {
         throw ArgumentError('Invalid request body "$body".');
       }
@@ -206,14 +211,22 @@ class ExtendedHttp extends BaseClient {
     Map<String, dynamic>? json;
 
     if (res.body.isNotEmpty) {
-      json = await compute((data) {
+      if (useIsolate) {
+        json = await compute((data) {
+          try {
+            return jsonDecode(data);
+          } catch (e) {
+            debugPrint("Json Decode Error: $e");
+            return null;
+          }
+        }, res.body);
+      } else {
         try {
-          return jsonDecode(data);
+          json = jsonDecode(res.body);
         } catch (e) {
           debugPrint("Json Decode Error: $e");
-          return null;
         }
-      }, res.body);
+      }
     }
 
     return JsonResponse(

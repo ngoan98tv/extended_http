@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.11] - May 11, 2023
+
+- Add `useIsolate = false` to `sendJsonRequest` to optionally switch between using `compute` or not.
+
 ## [1.2.10] - Apr 19, 2023
 
 - Add `sendJsonRequest` method which is included json encode and decode
