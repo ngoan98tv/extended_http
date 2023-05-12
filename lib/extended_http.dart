@@ -208,7 +208,7 @@ class ExtendedHttp extends BaseClient {
     }
 
     final res = await Response.fromStream(await send(request));
-    Map<String, dynamic>? json;
+    dynamic json;
 
     if (res.body.isNotEmpty) {
       if (useIsolate) {

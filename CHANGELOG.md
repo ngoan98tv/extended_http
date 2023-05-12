@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.12] - May 12, 2023
+
+- Change type of `json` in `JsonResponse` to `dynamic` since it may be `Map` or `List`
+
 ## [1.2.11] - May 11, 2023
 
 - Add `useIsolate = false` to `sendJsonRequest` to optionally switch between using `compute` or not.

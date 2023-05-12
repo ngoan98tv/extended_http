@@ -131,7 +131,7 @@ class JsonResponse {
   int code;
   String text;
   String? message;
-  Map<String, dynamic>? json;
+  dynamic json;
 
   JsonResponse({
     required this.code,
