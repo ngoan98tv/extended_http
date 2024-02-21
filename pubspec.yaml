@@ -2,7 +2,7 @@ name: extended_http
 description: Extends HTTP package to provide cache, store user credential,
   predefined authorization workflow, set custom request headers,
   beautiful logs and easy debugging with request debugId
-version: 1.2.12
+version: 1.3.12
 homepage: https://github.com/ngoan98tv/extended_http
 
 environment:

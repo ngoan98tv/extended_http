@@ -160,17 +160,53 @@ class ExtendedHttp extends BaseClient {
     );
   }
 
-  Future<StreamedResponse> sendFile(
-    Uri uri,
+  Future<JsonResponse> sendFile(
+    String path,
     List<MultipartFile> files, {
     String method = "POST",
+    String? debugId,
     Map<String, String>? fields,
+    HttpOptionalConfig? overrideConfig,
+    bool useIsolate = false,
   }) async {
+    final uri = createURI(
+      path,
+      debugId: debugId,
+      overrideConfig: overrideConfig,
+    );
+
     final request = MultipartRequest(method, uri)
       ..files.addAll(files)
       ..fields.addAll(fields ?? {});
 
-    return send(request);
+    final res = await Response.fromStream(await send(request));
+    dynamic json;
+
+    if (res.body.isNotEmpty) {
+      if (useIsolate) {
+        json = await compute((data) {
+          try {
+            return jsonDecode(data);
+          } catch (e) {
+            debugPrint("Json Decode Error: $e");
+            return null;
+          }
+        }, res.body);
+      } else {
+        try {
+          json = jsonDecode(res.body);
+        } catch (e) {
+          debugPrint("Json Decode Error: $e");
+        }
+      }
+    }
+
+    return JsonResponse(
+      code: res.statusCode,
+      text: res.body,
+      message: res.reasonPhrase,
+      json: json,
+    );
   }
 
   Future<JsonResponse> sendJsonRequest(
