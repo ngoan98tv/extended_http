@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.12] - Feb 21, 2024
+
+- Update `sendFile` method (params and return type)
+- Update dependencies version
+
 ## [1.2.12] - May 12, 2023
 
 - Change type of `json` in `JsonResponse` to `dynamic` since it may be `Map` or `List`
